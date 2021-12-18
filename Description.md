@@ -1,0 +1,21 @@
+# How to install the biomoni library?
+
+Create new anaconda environment (optional for other env than conda base):
+
+`conda create –name Biomonitoring python`
+`conda activate Biomonitoring`
+
+Copy the folder to your local dirve
+
+To install the required packages: open directory in terminal and type:
+
+`pip install -r Requiements.txt`
+
+To install the package in the current Anaconda env:
+
+`pip install -e .`      # . means this directory
+
+
+
+
+

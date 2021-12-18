@@ -1,0 +1,14 @@
+LICENSE.txt
+README.md
+pyproject.toml
+setup.py
+biomoni/Experiment.py
+biomoni/Model.py
+biomoni/Yeast.py
+biomoni/Yeast_variable_feedrate.py
+biomoni/__init__.py
+biomoni/visualize.py
+biomoni.egg-info/PKG-INFO
+biomoni.egg-info/SOURCES.txt
+biomoni.egg-info/dependency_links.txt
+biomoni.egg-info/top_level.txt
