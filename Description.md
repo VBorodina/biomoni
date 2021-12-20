@@ -3,6 +3,9 @@
 Create new anaconda environment (optional for other env than conda base):
 
 `conda create –name Biomonitoring python`
+
+Activate environment
+
 `conda activate Biomonitoring`
 
 Copy the folder to your local dirve
