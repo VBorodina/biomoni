@@ -15,6 +15,10 @@ To install the package in the current Anaconda env:
 
 `pip install -e .`      # . means this directory
 
+To install from github type this in terminal:
+
+`pip install -e git+https://github.com/PSenck/biomoni.git#egg=biomoni`
+
 
 
 

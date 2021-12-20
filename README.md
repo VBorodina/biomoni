@@ -7,3 +7,5 @@ The Model class has basic functionalities for an parameter estimation based on s
 The Yeast class is derived from the Model class and contains the kinetic model for a yeast fed batch fermentation and a simulation routine.
 
 The visualization module can visualize simulated and experimental data.
+
+Examples for an off and online estimation are provided in the "Examples" folder. Real Measurement data are provided in the "Messdaten" Folder.
