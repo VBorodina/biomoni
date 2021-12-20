@@ -12,7 +12,7 @@ Copy the folder to your local dirve
 
 To install the required packages: open directory in terminal and type:
 
-`pip install -r Requiements.txt`
+`pip install -r Requirements.txt`
 
 To install the package in the current Anaconda env:
 
