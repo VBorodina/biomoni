@@ -5,7 +5,7 @@ url = "opc.tcp://127.0.0.1:4848"    #OPC server url
 ##windows
 RESULT_PATH = r"P:\Code\Messdaten\OPCUA"    #path where Results (data from MFCS) are stored
 
-#Linux
+##Linux
 RESULT_PATH = "/home/paul/pCloudDrive/Code/Messdaten/OPCUA" #path where Results (data from MFCS) are stored
 
 

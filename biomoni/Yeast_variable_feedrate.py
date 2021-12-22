@@ -20,7 +20,7 @@ from lmfit import Parameters, report_fit, minimize  #in Model
 
 
 
-class Yeast(Model):     #Dependent on base class
+class Yeast_vf(Model):     #Dependent on base class
     """
     :class Yeast: A class to create a yeast model, the class can simulate a yeast fermentation and estimate parameters based on lab data. This class is inherited from the base class: Model.
     While Yeast.py was describing a fed batch fermentation with a constant feedrate, this class describes a fed batch fermentation with a changing feedrate over time. Thus there are changes in the function kinetics and create controls campared to Yeast.py.
@@ -308,9 +308,9 @@ class Yeast(Model):     #Dependent on base class
         c["pressure"] = self.calc_mean_pressure(experiment)
 
         feedpump_power = pd.to_numeric(experiment.dataset_raw["on"]["SUBS_A"] , downcast="float" , errors="coerce") #in some experiments the feed_pump from MFCS was recognized as string instead of float...
-        #feedpump_power.fillna(0)
+        #feedpump_power.fillna(0)       #nan values to zero
         feedrate = feedpump_power * c["feed_factor"]
-        c["feedrate_function"] = interp1d(x = feedrate.index, y = feedrate, fill_value =  "extrapolate") #create interpolation function which can be called in the kinetics function at specific time points
+        c["feedrate_function"] = interp1d(x = feedrate.index, y = feedrate, fill_value = (feedrate.iloc[0], feedrate.iloc[-1]) , bounds_error= False) #create interpolation function which can be called in the kinetics function at specific time points. if t < first value y assumes first value, if t > last value y assumes last value
 
 
         return c  
@@ -496,7 +496,7 @@ class Yeast(Model):     #Dependent on base class
 
         cS, cX, cE, V, Fin, qsOx, qsRed, muTotal, qe, qCO2, qm = self.kinetics(t, y, p, c, yields)   
     
-        dmS_dt = cX *V*(- qsOx - qsRed -qm)+ csf *Fin    #-qm substraction ?
+        dmS_dt = cX *V*(- qsOx - qsRed -qm)+ csf *Fin    
         dmX_dt = muTotal * cX * V
         dmE_dt = (qsRed * Yes_red - qe)*cX*V
         dV_dt  = + Fin

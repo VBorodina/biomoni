@@ -38,10 +38,9 @@ def visualize(data_1, data_2 = None, title = None
 
     suffix = {1: suffix_1, 2: suffix_2}
     mode = {1: mode_1, 2: mode_2}
-
     data_both = {1: data_1, 2: data_2}
     data_dict ={}
-
+    
     for i, data in data_both.items():
         assert isinstance(data, (pd.DataFrame, dict, list, Experiment, type(None))), "Data should be given either as an Experiment, a pd.DataFrame or as a list or dict with pd.DataFrame objects"
 

@@ -4,17 +4,15 @@ import pathlib
 import time
 import sys
 
-import_path = "/home/paul/Desktop/pCloudDrive/param/BioMoni"
-sys.path.append(import_path)        #to get modules from another directory
+#import_path = "../biomoni"
+#sys.path.append(import_path)        #to get modules from another directory
 
-from Experiment import Experiment
-from Yeast import Yeast
+from biomoni.Experiment import Experiment
+from biomoni.Yeast import Yeast
+from biomoni.visualize import visualize
 from settings_opcua import RESULT_PATH, data_name
-from Yeast import Yeast
-from visualize import visualize
 from param_collection import p0, p1
 
-#RESULT_PATH = r"P:\Code\Model_Martin_Version_ 08.09.2021\Testing_opcua\Results"    #MANUAL, DONT FORGET WEG
 
 sub_paths = next(os.walk(RESULT_PATH))[1]       #yields the subsirectory in the given path
 newest_results_folder = max([os.path.join(RESULT_PATH,i) for i in sub_paths], key=os.path.getmtime) #gives newest subdirectory
@@ -41,7 +39,7 @@ exp_dir_manual = newest_results_folder
 read_excel_settings = dict(engine = "odf")
 
 while True:
-    #man könnte erst time sleep 10 min machen
+    #man könnte erst time sleep 10 min machen um die Fehler zu umgehen
     #2 verschiedene Fehler wenn man sofort nach beginn des datenerstellens sampled: einmal  File "p:\BioMoni\Experiment.py", line 225, in _calc_t df["t"] = (df["ts"] - df["ts"][0]) / pd.Timedelta(1,"h"), IndexError: index 0 is out of bounds for axis 0 with size 0
     #und einmal ein paar Messwerte später "p:\BioMoni\Model.py", line 103, in estimate,  result = minimize(self.residuals, p, args=(datasets_dict,  settings_dict, kwargs_solve_ivp), method = method, nan_policy = nan_policy, **fit_kws), \scipy\optimize\minpack.py", TypeError: Improper input: N=4 must not exceed M=3
     time.sleep(1)

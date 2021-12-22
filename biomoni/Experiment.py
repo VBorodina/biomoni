@@ -71,6 +71,7 @@ class Experiment:
 
     # , filtering_columns = False, filter_on = ["base_rate"], filter_off = ["cX", "cS", "cE"], filter_CO2 = ["CO2"]
         pd.options.mode.chained_assignment = None       #because of pandas anoying error
+        #<3
         assert type(path) is str, "The given Path must be of type str"
         assert type(meta_path) is str, "The given meta_path must be of type str"
         assert all(isinstance(i, str) for i in types.values() ), "given file names must be strings"
