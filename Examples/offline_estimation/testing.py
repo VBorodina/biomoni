@@ -7,7 +7,7 @@ import numpy as np
 path = "/home/paul/pCloudDrive/Code/Messdaten" 
 
 # #windows path
-#path = r"P:\Code\Messdaten"
+path = r"P:\Code\biomoni\Messdaten"
 
 experiment_dict = {exp : Experiment(path, exp) for exp in ["F4", "F5", "F6", "F7", "F8" ]}  #all experiments in a dictionary
 experiment_dict["F8"].time_filter(dskey= "on", start = pd.to_datetime("14.12.2020  12:20:16")) #special time filter for experiment 8
