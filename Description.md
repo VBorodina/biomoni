@@ -21,8 +21,8 @@ To install the package, open terminal in the directory and type:
 
 
 
-
-To install from github directly from Github, by this technique, a folder is cloned to your device:
+Alternatively, the package can be installed directly from github, in this case the main folder is cloned to the local drive and named src
+To install from github directly from Github:
 
 Requirements:
 `pip install -r https://raw.githubusercontent.com/PSenck/biomoni/main/Requirements.txt`
