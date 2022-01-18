@@ -68,10 +68,11 @@ class Experiment:
     , read_excel_settings = None
 
     ):
+       
 
     # , filtering_columns = False, filter_on = ["base_rate"], filter_off = ["cX", "cS", "cE"], filter_CO2 = ["CO2"]
         pd.options.mode.chained_assignment = None       #because of pandas anoying error
-        #<3
+        
         assert type(path) is str, "The given Path must be of type str"
         assert type(meta_path) is str, "The given meta_path must be of type str"
         assert all(isinstance(i, str) for i in types.values() ), "given file names must be strings"
@@ -105,6 +106,7 @@ class Experiment:
 
         self.path = path 
         self.exp_id = exp_id
+        self.endpoint = endpoint
 
 
 
@@ -135,7 +137,7 @@ class Experiment:
         self.metadata = metadata_all.loc[exp_id]
 
         
-        assert endpoint in metadata_all.columns, "Given endpoint (end1 or end2) must be in metadata columns"
+        assert endpoint in metadata_all.columns, "Given endpoint must be in metadata columns"
         start = self.metadata["start"]
         end = self.metadata[endpoint]    
 
@@ -249,7 +251,7 @@ class Experiment:
         :type read_csv_settings: dict
         :param to_datetime_settings: Pandas to_datetime settings to convert timestamp column to pd.Timestamp
         :type to_datetime_settings: dict
-
+path
         """
 
         df = pd.read_csv(path, **read_csv_settings)
@@ -271,14 +273,14 @@ class Experiment:
                     self.dataset.pop(typ)
                     
                 else: 
-                    raise ValueError("All types must be in dataset.keys() = ['on', 'off', 'CO2'] for G015")
+                    raise ValueError("Given types must be in the dataset")
 
         elif type(types) is str:
             if types in self.dataset.keys():
                 self.dataset.pop(types)
 
             else:
-                raise ValueError("Typ must be in dataset.keys() = e.g. ['on', 'off', 'CO2'] for G015")
+                raise ValueError("Typ must be in the dataset")
         else:
             raise TypeError("Type of types must be a str or a list of strings")
 

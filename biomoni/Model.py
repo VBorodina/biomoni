@@ -138,8 +138,8 @@ class Model:
         self.duration = end - start         
         self.result = result
         self.p = result.params
-        self.yields = self.chemical_balancing(self.p)
-        self.data_and_residuals = self.get_residuals(self.p, self.yields, datasets_dict, settings_dict, kwargs_solve_ivp)
+        self.yields = self.chemical_balancing(self.p)   #this may be not generic since the function chemical balancing may not be given in every submodel
+        self.data_and_residuals = self.get_residuals(self.p, self.yields, datasets_dict, settings_dict, kwargs_solve_ivp)   #same prob with self.yields. there may be models which dont even need extra calculated yields in order to simulate 
         self.stat_single, self.stat_all = self.statistics(self.data_and_residuals)
 
 

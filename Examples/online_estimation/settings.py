@@ -7,9 +7,9 @@ Simulation_path = r"P:\Code\biomoni\Messdaten"    #path in which the experiment 
 exp_id = "F7"
 
 ##Linux
-#Result_path = "/home/paul/pCloudDrive/Code/Messdaten/OPCUA" #path where Results (data from MFCS) are stored
+Result_path = "/home/paul/pCloudDrive/Code/biomoni/Messdaten/OPCUA" #path where Results (data from MFCS) are stored
 ##windows
-Result_path = r"P:\Code\biomoni\Messdaten\OPCUA"    #path where Results (data from MFCS) are stored
+#Result_path = r"P:\Code\biomoni\Messdaten\OPCUA"    #path where Results (data from MFCS) are stored
 
 data_name = "data_1"        #name of the csv file in which data will be saved
 

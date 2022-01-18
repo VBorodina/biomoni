@@ -55,18 +55,18 @@ class Yeast(Model):     #Dependent on base class
         if p is None:          
 
             p = Parameters()
-            p.add("qsmax", value= 1.61290497, min=0.01, max=5.0 , vary = True)     #Maximum glucose uptake rate [g/(g*h)]   #previous start val: 0.1  #estimated value: 1.61290497
+            p.add("qsmax", value= 1.6, min=0.01, max=5.0 , vary = True)     #Maximum glucose uptake rate [g/(g*h)]   #previous start val: 0.1  #estimated value: 1.61290497
             p.add("qemax", value=0.2361, min=0.15, max=0.35, vary=False)    #Maximum ethanol uptake rate [g/(g*h)]       #value=0.2361, min=0.15, max=0.35, vary=True # value=0.05, min=0.001, max=0.5,  vary=True geht
 
-            p.add("base_coef", value= 0.00733798 , min=0.0001, max =3, vary = True)     #base coefficient [mol/g]     #previous start val: 1 #estimated value: 0.00733798      
-            p.add("qO2max", value= 0.16473635, min=0.1, max=0.4, vary = True)    #Maximum oxygen uptake rate [g/(g*h)]  , min=0.1  0.1, 0.4  #previous start val: 0.255984, 1 #estimated value: 0.17451356
+            p.add("base_coef", value= 0.007395 , min=0.0001, max =3, vary = True)     #base coefficient [mol/g]     #previous start val: 1 #estimated value: 0.00733798      
+            p.add("qO2max", value= 0.164745, min=0.1, max=0.4, vary = True)    #Maximum oxygen uptake rate [g/(g*h)]  , min=0.1  0.1, 0.4  #previous start val: 0.255984, 1 #estimated value: 0.17451356
             p.add("qm_max", value=0.01, min=0.0075, max=0.0125, vary = False)  #glucose uptake rate required for maintenance [g/(g*h)]  
             
             p.add("Ks", value=0.1, min=0.01, max=1,  vary=False)   #Saturation constant, concentration of glucose at µ = 0.5 µmax [g/L]
             p.add("Ke", value=0.1, min=0.01, max=1, vary=False)    #Saturation constant, concentration of ethanol at µ = 0.5 µmax [g/L]
             p.add("Ki", value=0.1, min=0.01, max=1, vary=False)    #Inhibition constant, glucose inhibits uptake of ethanol [g/L]
 
-            p.add("Yxs_ox", value= 0.52792125, min=0.3, max=0.6, vary=True) #Yield biomass per glucose (oxidative growth) [g/g] #previous start val: 49    #estimated value 0.52792125
+            p.add("Yxs_ox", value= 0.5389, min=0.3, max=0.6, vary=True) #Yield biomass per glucose (oxidative growth) [g/g] #previous start val: 49    #estimated value 0.52792125
             p.add("Yxs_red", value=0.05, min=0.01, max=0.8, vary=False)    #Yield biomass per glucose (reductive growth) [g/g] 
             p.add("Yxe_et", value=0.72, min=0.5, max=0.8, vary=False)      #Yield biomass per ethanol [g/g]
             p.add("Yxg_glyc", value=0.2, min=0.1, max=0.35, vary=False)    #Yield biomass per glycerol [g/g]              #value=0.2, min=0.1, max=0.35, vary=False
@@ -608,7 +608,7 @@ class Yeast(Model):     #Dependent on base class
     
     def simulate(self, experiment = None, t_grid = None, y0 = None, p = None,  c = None, yields = None
     , kwargs_solve_ivp = dict(method= "Radau", first_step = 0.0000001, max_step= 0.1)       # kwargs_solve_ivp may have to be adapted
-    , t_step = 1000, endpoint = "end1", **kwargs_solve_ivp_given):  
+    , t_step = 1000, endpoint = None, **kwargs_solve_ivp_given):  
 
         """
         Simulates values by calling the observation function, it is possible to simulate manually by using values for t_grid, p, y0 c and yields or via an Experiment object. 
@@ -659,10 +659,7 @@ class Yeast(Model):     #Dependent on base class
     
         if kwargs_solve_ivp_given:       #check if kwargs_direct are given to simulate, if yes use given kwargs if not use kwargs_solve_ivp handed over from estimate or default kwargs_solve_ivp
             kwargs_solve_ivp = kwargs_solve_ivp_given #it helps if you want to simulate manually with your own kwargs
-        # #     print("took own **kwargs_solve_ivp_given", "\n", kwargs_solve_ivp)      
-        # # else: 
-        # #     print("took standard kwargs_solve_ivp", "\n", kwargs_solve_ivp)
-              
+
           
         if experiment is not None:      #This if statement is to directly simulate from experiment, it is possible to give an experiment with modified t,y,p,c
             assert isinstance(experiment, Experiment), "Given experiment must be of type Experiment"
@@ -679,7 +676,12 @@ class Yeast(Model):     #Dependent on base class
 
                     start_ts = experiment.metadata["start"]
                     
-                assert endpoint in experiment.metadata.index, "Given endpoint (end1 or end2) must be in metadata columns"   #.index because of pd.series
+                    
+                if endpoint is None:        #if the endpoint is not given, the same endpoint from Experiment creation is used
+                    endpoint = experiment.endpoint
+                else:                    
+                    assert endpoint in experiment.metadata.index, "Given endpoint must be in metadata columns"   #.index because of pd.series
+
                 if experiment.metadata[endpoint] is None: 
 
                     t_grid_list = [df.index.values for df in experiment.dataset.values()]   #get t_grid for every typ in experiment as list

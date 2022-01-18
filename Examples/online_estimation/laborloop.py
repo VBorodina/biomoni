@@ -1,6 +1,9 @@
 import os
 import pathlib
 import time
+import pandas as pd
+import csv
+from datetime import datetime
 
 from biomoni.Experiment import Experiment
 from biomoni.Yeast import Yeast
@@ -26,15 +29,27 @@ calc_rate =(typ1, "BASET")
 exp_dir_manual = pathlib.PurePath(newest_results_dir).name  #this is given because the subfoldername does not match the 
 exp_dir_manual = newest_results_dir
 read_excel_settings = dict(engine = "odf")
+y = Yeast()
+
+estimated_params = {"ts" : []}
+for p in y.p.keys():
+    estimated_params[p] = []
+estimated_params = pd.DataFrame(estimated_params)
+
+param_file = os.path.join(newest_results_dir, "estimated_params") 
+with open(param_file, 'w', newline = "") as f:       #csv file will be created #newline because open makes some extra lines, avoid by using newline = ""
+    writer = csv.writer(f)
+    writer.writerow(estimated_params.columns.values)       
+
 
 while True:
-    time.sleep(5*60)    #5 min sampling before each estimation
+    time.sleep(1)    #5 min sampling before each estimation
 
     Exp = Experiment(path = Result_path, meta_path= meta_path, exp_id = exp_id, types = types, index_ts= index_ts
     , read_csv_settings= read_csv_settings, to_datetime_settings= to_datetime_settings, calc_rate= calc_rate, exp_dir_manual = exp_dir_manual, read_excel_settings = read_excel_settings)
 
 
-    y = Yeast()
+    
     y.set_params(p1)    #change initial parameters to test estimation
     y.estimate(Exp, tau = 1, max_nfev = 100)     #max function evaluations #, max_nfev = 100  
 
@@ -58,6 +73,20 @@ while True:
     print("base_coef : ", y.p["base_coef"])   
 
     visualize(Exp, sim, column_dict = {"BASET_rate" : "cyan", "CO2" : "orange"}, secondary_y_cols = ["CO2"])
+
+    appendix = {"ts" : datetime.now().strftime("%d.%m.%Y %H:%M:%S") }
+    for p, value in y.p.items():
+        appendix[p] = value.value
+    
+    x = 3
+    appendix = pd.Series(appendix)
+
+    #append csv file row by row
+    with open(param_file, 'a', newline = "") as f:
+        writer = csv.writer(f)
+        writer.writerow(appendix)
+
+
 
     
 

@@ -276,7 +276,7 @@ class Yeast_vf(Model):     #Dependent on base class
         return pressure
 
     def calc_weighting_factors(self, experiment):
-        """Calculates weighting factors from an single experiment: wf(i) = len("off") dataset / len(i) dataset for i = "CO2" or "on".
+        """Calculates weighting factors from an single experiment: e.g. wf(i) = len("off") dataset / len(i) dataset for i = "CO2" or "on".
         
         :param experiment: Experiment object
         :type experiment: BioMoni.Experiment.Experiment
@@ -620,7 +620,7 @@ class Yeast_vf(Model):     #Dependent on base class
     
     def simulate(self, experiment = None, t_grid = None, y0 = None, p = None,  c = None, yields = None
     , kwargs_solve_ivp = dict(method= "Radau", first_step = 0.0000001, max_step= 0.1)       # kwargs_solve_ivp may have to be adapted
-    , t_step = 1000, endpoint = "end1", **kwargs_solve_ivp_given):  
+    , t_step = 1000, endpoint = None, **kwargs_solve_ivp_given):  
 
         """
         Simulates values by calling the observation function, it is possible to simulate manually by using values for t_grid, p, y0 c and yields or via an Experiment object. 
@@ -668,13 +668,12 @@ class Yeast_vf(Model):     #Dependent on base class
         
         :return: sim_exp: Simulated data.
         """
-    
+
+
         if kwargs_solve_ivp_given:       #check if kwargs_direct are given to simulate, if yes use given kwargs if not use kwargs_solve_ivp handed over from estimate or default kwargs_solve_ivp
             kwargs_solve_ivp = kwargs_solve_ivp_given #it helps if you want to simulate manually with your own kwargs
-        # #     print("took own **kwargs_solve_ivp_given", "\n", kwargs_solve_ivp)      
-        # # else: 
-        # #     print("took standard kwargs_solve_ivp", "\n", kwargs_solve_ivp)
-              
+
+        
           
         if experiment is not None:      #This if statement is to directly simulate from experiment, it is possible to give an experiment with modified t,y,p,c
             assert isinstance(experiment, Experiment), "Given experiment must be of type Experiment"
@@ -690,8 +689,12 @@ class Yeast_vf(Model):     #Dependent on base class
                 else:
 
                     start_ts = experiment.metadata["start"]
-                    
-                assert endpoint in experiment.metadata.index, "Given endpoint (end1 or end2) must be in metadata columns"   #.index because of pd.series
+
+
+                if endpoint is None:        #if the endpoint is not given, the same endpoint from Experiment creation is used
+                    endpoint = experiment.endpoint
+                else:                    
+                    assert endpoint in experiment.metadata.index, "Given endpoint (end1 or end2) must be in metadata columns"   #.index because of pd.series
                 if experiment.metadata[endpoint] is None: 
 
                     t_grid_list = [df.index.values for df in experiment.dataset.values()]   #get t_grid for every typ in experiment as list
