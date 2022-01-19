@@ -252,7 +252,7 @@ def update_table_params(jsonified_data):
     dataset = json.loads(jsonified_data)
     params = dataset["params"]
     params = pd.DataFrame(params).T
-    col_names = [{"name": i, "id": i} for i in params.columns]
+    col_names = [{"name": i, "id": i, "editable" : True } for i in params.columns]
 
     return col_names, params.to_dict("records")
 

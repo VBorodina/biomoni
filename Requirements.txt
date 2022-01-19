@@ -4,4 +4,4 @@ scipy
 plotly
 lmfit
 sympy
-dash
+odfpy
