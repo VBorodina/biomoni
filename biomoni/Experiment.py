@@ -55,7 +55,7 @@ class Experiment:
     , index_ts = {"off" : 0, "on": 0, "CO2" : 0}
 
     , read_csv_settings = { "off" : dict(sep=";", encoding= 'unicode_escape', header = 0, skiprows=[1], usecols = None)
-    , "on": dict(sep=";",encoding= "unicode_escape",decimal=",", skiprows=[1,2] , skipfooter=1, usecols = None, engine="python")
+    , "on": dict(sep=";",encoding= "unicode_escape",decimal=",", skiprows=[2,3] , skipfooter=1, usecols = None, engine="python", header= [0,1])
     , "CO2" : dict(sep=";", encoding= "unicode_escape", header = 0, skiprows=[0], usecols=[0,2,4], names =["ts","CO2", "p"])    }
 
     , to_datetime_settings = {"off" : dict(format = "%d.%m.%Y %H:%M", exact= False, errors = "coerce")
@@ -204,15 +204,14 @@ class Experiment:
         """
 
         df = self.dataset[dskey]
-
+               
         if start is None:
-            df["t"] = (df["ts"] - df["ts"][0]) / pd.Timedelta(1,"h")
+            df["t"] = (df["ts"] - df["ts"][0]) / pd.Timedelta(1,"h") 
         if start is not None:
             df["t"] = (df["ts"] - start) / pd.Timedelta(1,"h")
-
-    
+                
         df.set_index("t", inplace= True, drop= True)        #set t to index of dataframe
-        
+         
         self.dataset[dskey] = df
 
 
@@ -254,7 +253,7 @@ class Experiment:
 path
         """
 
-        df = pd.read_csv(path, **read_csv_settings)
+        df = pd.read_csv(path, **read_csv_settings)  
         df["ts"] = pd.to_datetime(df.iloc[:, index_ts], **to_datetime_settings)
         return df
 
