@@ -54,7 +54,7 @@ class Experiment:
     , types = {"off" : "offline.csv", "on": "online.CSV", "CO2" : "CO2.dat"}
     , index_ts = {"off" : 0, "on": 0, "CO2" : 0}
 
-    , read_csv_settings = { "off" : dict(sep=";", encoding= 'unicode_escape', header = 0, usecols = None)
+    , read_csv_settings = { "off" : dict(sep=";", encoding= 'unicode_escape', header = 0, skiprows=[1], usecols = None)
     , "on": dict(sep=";",encoding= "unicode_escape",decimal=",", skiprows=[1,2] , skipfooter=1, usecols = None, engine="python")
     , "CO2" : dict(sep=";", encoding= "unicode_escape", header = 0, skiprows=[0], usecols=[0,2,4], names =["ts","CO2", "p"])    }
 
@@ -62,9 +62,9 @@ class Experiment:
     , "on": dict(format = "%d.%m.%Y  %H:%M:%S", exact= False, errors = "coerce")
     , "CO2" : dict(format = "%d.%m.%Y %H:%M:%S", exact= False, errors = "coerce")   }
 
-    , calc_rate = ("on", "BASET")
+    , calc_rate = ("on", "BASET_2")
     , exp_dir_manual = None
-    , endpoint = "end1"
+    , endpoint = "Sim_end"
     , read_excel_settings = None
 
     ):
