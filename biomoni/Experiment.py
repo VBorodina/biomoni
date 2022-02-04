@@ -52,17 +52,17 @@ class Experiment:
 
     def __init__(self, path, exp_id, meta_path = "metadata.xlsx"
     , types = {"off" : "offline.csv", "on": "online.CSV", "CO2" : "CO2.dat"}
-    , index_ts = {"off" : 0, "on": 0, "CO2" : 0}
+    , index_ts = {"off" : 0, "on": 1, "CO2" : 0}
 
     , read_csv_settings = { "off" : dict(sep=";", encoding= 'unicode_escape', header = 0, skiprows=[1], usecols = None)
     , "on": dict(sep=";",encoding= "unicode_escape",decimal=",", skiprows=[2,3] , skipfooter=1, usecols = None, engine="python", header= [0,1])
     , "CO2" : dict(sep=";", encoding= "unicode_escape", header = 0, skiprows=[0], usecols=[0,2,4], names =["ts","CO2", "p"])    }
 
     , to_datetime_settings = {"off" : dict(format = "%d.%m.%Y %H:%M", exact= False, errors = "coerce")
-    , "on": dict(format = "%d.%m.%Y  %H:%M:%S", exact= False, errors = "coerce")
+    , "on": dict(format = "%d.%m.%Y  %H:%M", exact= False, errors = "coerce")
     , "CO2" : dict(format = "%d.%m.%Y %H:%M:%S", exact= False, errors = "coerce")   }
 
-    , calc_rate = ("on", "BASET_2")
+    , calc_rate = ("on", ('BASET_2', 'Value'))
     , exp_dir_manual = None
     , endpoint = "Sim_end"
     , read_excel_settings = None
@@ -234,7 +234,7 @@ class Experiment:
         
         except:
             df[col] = pd.to_numeric(df[col] , downcast="float" , errors="coerce") # some values in BASET were recognized as string
-            df[col + "_rate"] = df[col].diff() / np.diff(df.index, prepend= 1)
+            df[str(col) + "_rate"] = df[col].diff() / np.diff(df.index, prepend= 1)
 
         self.dataset[dskey] = df
 
