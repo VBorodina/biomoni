@@ -135,7 +135,7 @@ class Experiment:
         metadata_all = metadata_all.astype(object).where(metadata_all.notnull(), None)  #load metadata and replace NaN and NaT values with None required for adequate time filtering in time_filter
         assert exp_id in metadata_all.index.values, "Experiment have to be in metadata"
         self.metadata = metadata_all.loc[exp_id]
-
+        
         
         assert endpoint in metadata_all.columns, "Given endpoint must be in metadata columns"
         start = self.metadata["start"]
@@ -150,9 +150,9 @@ class Experiment:
             self.time_filter(dskey, start, end)
         
         if calc_rate is not None:
-            self.calc_rate(*calc_rate)
-        
-        
+            self.calc_rate(*calc_rate)      
+    
+      
     
     def time_filter(self, dskey, start = None, end = None):
         """Function to filter according to process time  
