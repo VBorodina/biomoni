@@ -1,4 +1,4 @@
-ts;F-Time [h];Glucose [g/L];Acetate [g/L];Phosphate [g/L];Peak 22.87 min;Peak 23.94 min;Peak 24.21 min;OD 600;OD standardabweichung;CDW_berechnet [g/L];RF [mg/L];RF standardabweichung;SampleVolume [g]
+ts;F-Time [h];Glucose [g/L];Acetate [g/L];Phosphate [g/L];Peak 22.87 min;Peak 23.94 min;Peak 24.21 min;OD 600;OD standardabweichung;CDW_calc;RF [mg/L];RF standardabweichung;SampleVolume [g]
 14.12.2021 16:53;0.07;30.5417698;0;10.3285536;;110110;;0.1469;#DIV/0!;0.05389761;0.44137931;#DIV/0!;3.71
 15.12.2021 08:53;16.07;30.19027137;0.941289462;10.80483141;;124580;;1.232266667;0.020259648;0.45211864;102.3103448;0.776436569;3.58
 15.12.2021 10:34;17.75;28.73925259;1.431262762;10.86605996;;;;2.211333333;0.053799009;0.8113382;82.71264368;1.943412708;4.23

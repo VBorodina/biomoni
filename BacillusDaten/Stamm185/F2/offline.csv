@@ -1,4 +1,4 @@
-ts;F-Time [h];Glucose [g/L];Acetate [g/L];Phosphate [g/L];Peak 22.84 min;Peak 23.94 min;OD 600;OD standardabweichung;CDW Method 1[g/L];CDW standardabweichung;RF [mg/L];RF standardabweichung;;RF [mg/mL];cleaned CDW;CDW based on OD
+ts;F-Time [h];Glucose [g/L];Acetate [g/L];Phosphate [g/L];Peak 22.84 min;Peak 23.94 min;OD 600;OD standardabweichung;CDW Method 1[g/L];CDW standardabweichung;RF [mg/L];RF standardabweichung;;RF [mg/mL];cleaned CDW;CDW_calc
 30.11.2021 16:08;0.03;19.60835043;0;9.879667922;0;139840;0.08915;0.00055;0.1;0.1;5.24137931;0.172413793;;0.005241379;0.094758621;0.02437361
 01.12.2021 08:07;16.02;19.77666412;0.380753485;10.81357977;0;105170;1.1848;0.0094;0.05;0.05;41.86206897;0.103448276;;0.041862069;0.008137931;0.32392432
 01.12.2021 08:50;16.73;20.87284103;0.856695341;11.87705764;0;62020;1.5083;0.0057;0.4;0.1;56.87931034;1.844827586;;0.05687931;0.34312069;0.41236922

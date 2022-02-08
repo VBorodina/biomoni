@@ -1,4 +1,4 @@
-ts;F-Time [h];Glucose [g/L];Acetate [g/L];Phosphate [g/L];OD 600;CDW Method 1[g/L];CDW Method 2[g/L];RF [mg/L];RF Method 2 [g/L];RF Method 3 [g/L];theor. Glc  g;theor. Glc L;theor. Glc #[g/L];;RF [mg/mL];cleaned CDW;CDW based on OD
+ts;F-Time [h];Glucose [g/L];Acetate [g/L];Phosphate [g/L];OD 600;CDW Method 1[g/L];CDW Method 2[g/L];RF [mg/L];RF Method 2 [g/L];RF Method 3 [g/L];theor. Glc  g;theor. Glc L;theor. Glc #[g/L];;RF [mg/mL];cleaned CDW;CDW_calc
 17.11.2021 10:06;0.05;27.56004025;0;9.303142458;0.0805;0;0;0.145;NaN;NaN;;;;;0.000145;0;0.02586465
 17.11.2021 11:52;1.82;29.69194066;0;10.03602255;0.07;0;0;0.405172414;7.443103448;NaN;;;;;0.000405172;0;0.022491
 17.11.2021 13:19;3.27;31.02630235;0;10.5507561;0.07235;0;0;0.55862069;8.412068966;NaN;;;;;0.000558621;0;0.023246055
