@@ -150,7 +150,10 @@ class Experiment:
             self.time_filter(dskey, start, end)
         
         if calc_rate is not None:
-            self.calc_rate(*calc_rate)      
+            self.calc_rate(*("on", ('BASET_2', 'Value')))
+            self.calc_rate(*("off",("Glucose [g/L]")))
+            self.calc_rate(*("off",("RF [mg/L]")))
+            self.calc_rate(*("off",("CDW_calc")))      
     
       
     
@@ -230,11 +233,11 @@ class Experiment:
         df = self.dataset[dskey]
 
         try:
-            df[col + "_rate"] = df[col].diff() / np.diff(df.index, prepend= 1)
+            df[col + "_rate"] = np.diff(df[col]) / np.diff(df.index, prepend =1)
         
         except:
             df[col] = pd.to_numeric(df[col] , downcast="float" , errors="coerce") # some values in BASET were recognized as string
-            df[str(col) + "_rate"] = df[col].diff() / np.diff(df.index, prepend= 1)
+            df[str(col) + "_rate"] = np.diff(df[col], prepend = 0) / np.diff(df.index, prepend = 1)
 
         self.dataset[dskey] = df
 
