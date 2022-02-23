@@ -2,9 +2,6 @@ import sys
 sys.path.append("V:/biomoni/")   #without this line windows could not acces the package 
 from plotly.subplots import make_subplots
 import plotly.graph_objs as go
-from biomoni.Experiment import Experiment
-from biomoni.BacillusVariableFeedrate import Bacillus_vf
-
 
 
 def visualizeBacillusFermentation(dict_for_graphs):
@@ -36,6 +33,7 @@ def visualizeBacillusFermentation(dict_for_graphs):
     #figure top left: RF and RF production rate
     fig.add_trace(go.Scatter(x=dfg[exp]["off"].index, y= dfg[exp]["off"]["RF [mg/L]"], mode="markers", name = "Riboflavin", marker= dict(color= col_dict["RF"], size= 8, symbol="x"), legendgroup ="group1"), row=1, col=1)
     fig.add_trace(go.Scatter(x=[0], y= [0], mode="markers", name = "Riboflavin production rate", marker= dict(color= col_dict["rP"], size= 5, symbol="0"),legendgroup ="group1"),row=1, col=1, secondary_y=True)
+    fig.add_trace(go.Scatter(x=dfg[exp]["simulated"].index, y=dfg[exp]["simulated"]["cP"], mode="lines", name = "Riboflavin_simulated", line= dict(color= col_dict["RF"], width= 2, dash="dot"), legendgroup ="group3"), row=1, col=1)
     fig.update_yaxes(title_text="Riboflavin [mg/L]", row=1,col=1, secondary_y =False, titlefont=dict(size=15), color=col_dict["RF"],showline=True, linewidth=2, linecolor=col_dict["RF"],showgrid=True, gridwidth=1, gridcolor="rgb(240,240,240)",zeroline=False,range = [0,5500])
     fig.update_yaxes(title_text="RF production rate [mg/L/h]", row=1,col=1, secondary_y =True, titlefont=dict(size=15), color=col_dict["rP"],showline=True, linewidth=2, linecolor=col_dict["rP"],showgrid=False, gridwidth=1, gridcolor='LightPink',zeroline=False, range = [0,10])
 
@@ -67,6 +65,7 @@ def visualizeBacillusFermentation(dict_for_graphs):
     fig.add_trace(go.Scatter(x=dfg[exp]["off"].index, y= dfg[exp]["off"]["Glucose [g/L]"], mode="markers", name = "Glucose", marker= dict(color= col_dict["Glc [g/L]"], size= 8, symbol="x"), legendgroup ="group5"), row=3, col=1)
     fig.add_trace(go.Scatter(x=[0], y= [0], mode="markers", name = "Glc consumption rate", marker= dict(color= col_dict["rGlc"], size= 5, symbol="0"),legendgroup ="group5"),row=3, col=1, secondary_y=True)
     fig.add_trace(go.Scatter(x=[0], y= [0], mode="markers", name = "Glc Feed rate", marker= dict(color= col_dict["GlcFeed_rate"], size= 5, symbol="0"),legendgroup ="group5"),row=3, col=1, secondary_y=True)
+    fig.add_trace(go.Scatter(x=dfg[exp]["simulated"].index, y=dfg[exp]["simulated"]["cS"], mode="lines", name = "Glucose_simulated", line= dict(color= col_dict["Glc [g/L]"], width= 2, dash="dot"), legendgroup ="group3"), row=3, col=1)
     fig.update_yaxes(title_text="Glucose [g/L]", row=3,col=1, secondary_y =False, titlefont=dict(size=15), color=col_dict["Glc [g/L]"],showline=True, linewidth=2, linecolor=col_dict["Glc [g/L]"],showgrid=True, gridwidth=1, gridcolor="rgb(240,240,240)",zeroline=False,range = [0,70])
     fig.update_yaxes(title_text="Glc consumption rate [], Glc feed rate [g/L]", row=3,col=1, secondary_y =True, titlefont=dict(size=15), color=col_dict["rGlc"],showline=True, linewidth=2, linecolor=col_dict["rGlc"],showgrid=False, gridwidth=1, gridcolor='LightPink',zeroline=False,range = [0,100])
     
@@ -74,8 +73,8 @@ def visualizeBacillusFermentation(dict_for_graphs):
     fig.add_trace(go.Scatter(x=dfg[exp]["simulated"].index, y=dfg[exp]["simulated"]["V"], mode="lines", name = "Volume", line= dict(color= col_dict["V"], width= 2, dash = "dot"), legendgroup ="group6"), row=3, col=2,secondary_y=True)
     fig.add_trace(go.Scatter(x=dfg[exp]["on"].index, y=dfg[exp]["on"][("FOAMT_2","Value")], mode="markers", name = "Antifoam", marker= dict(color= col_dict[("FOAMT_2" , "Value")], size= 2, symbol="0"),legendgroup ="group6"),row=3, col=2, secondary_y=False)
     #fig.add_trace(go.Scatter(x=[0], y= [0], mode="markers", name = "Fout", marker= dict(color= col_dict["F_out"], size= 5, symbol="0"),legendgroup ="group6"),row=3, col=2, secondary_y=True)
-    fig.update_yaxes(title_text="Antifoam [mL]", row=3,col=2, secondary_y =False, titlefont=dict(size=15), color=col_dict[("FOAMT_2" , "Value")],showline=True, linewidth=2, linecolor=col_dict[("FOAMT_2" , "Value")],showgrid=True, gridwidth=1, gridcolor="rgb(240,240,240)",zeroline=False,range = [0,10])
-    fig.update_yaxes(title_text="Volume [L], Fout []", row=3,col=2, secondary_y =True, titlefont=dict(size=15), color=col_dict["V"],showline=True, linewidth=2, linecolor=col_dict["V"],showgrid=False, gridwidth=1, gridcolor='LightPink',zeroline=False,range = [0,20])
+    fig.update_yaxes(title_text="Antifoam [mL]", row=3,col=2, secondary_y =False, titlefont=dict(size=15), color=col_dict[("FOAMT_2" , "Value")],showline=True, linewidth=2, linecolor=col_dict[("FOAMT_2" , "Value")],showgrid=True, gridwidth=1, gridcolor="rgb(240,240,240)",zeroline=False,range = [0,3])
+    fig.update_yaxes(title_text="Volume [L], Fout []", row=3,col=2, secondary_y =True, titlefont=dict(size=15), color=col_dict["V"],showline=True, linewidth=2, linecolor=col_dict["V"],showgrid=False, gridwidth=1, gridcolor='LightPink',zeroline=False,range = [0,1.5])
     
     #fig 4th row,left: Base demand(cummulated), Base consumption rate, pH
     fig.add_trace(go.Scatter(x=dfg[exp]["on"].index, y=dfg[exp]["on"][("BASET_2","Value")], mode="markers", name = "cumulated NH3 demand", marker= dict(color= col_dict[("BASET_2","Value")], size= 3, symbol="0"), legendgroup ="group7"), row=4, col=1)
