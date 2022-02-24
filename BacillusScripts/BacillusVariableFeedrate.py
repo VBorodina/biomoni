@@ -482,11 +482,16 @@ class Bacillus_vf(Model):     #Dependent on base class
 
         #dmX_dt = np.array([self.model_rhs(t = t_grid[i], y = y_t[i,:], p = p, c = c, yields = yields) for i in range(len(t_grid))])[:,0]  #calc dmX_dt from model funcs
         #BASET_rate_wrong = dmX_dt * 1000  #base_rate in ml/h
-
-       # CO2_percent = np.array([self.calc_CO2(t = t_grid[i], y = y_t[i,:], p = p, c = c, yields = yields) for i in range(len(t_grid))])     #CO2 in vol.% from calc_CO2
+         
+        if "Fout" in c:
+            Fout = c["Fout"](t_grid)
+            Fout = np.nan_to_num(Fout)
+        else:
+            Fout = 0
+        #CO2_percent = np.array([self.calc_CO2(t = t_grid[i], y = y_t[i,:], p = p, c = c, yields = yields) for i in range(len(t_grid))])     #CO2 in vol.% from calc_CO2
 
         
-        dict_sim_exp = {("t"): t_grid, ("V"): V, ("cX", "CDW_calc"):cX, ("BASET_rate","BASE"): 1, ("cS", "S"): cS,("cP","P"): cP}                 #necessary to extend the dict if col names are different in offline/online datasets for different Fermentation runs, warning: give BASET_rate column also another alternative name even if BASET_rate has no other names. If you dont: you will get each letter as a seperate column and t will be overwritten!  
+        dict_sim_exp = {("t"): t_grid, ("V"): V, ("cX", "CDW_calc"):cX, ("BASET_rate","BASE"): 1, ("cS", "S"): cS,("cP","P"): cP, ("Fout","F_out"): Fout}                 #necessary to extend the dict if col names are different in offline/online datasets for different Fermentation runs, warning: give BASET_rate column also another alternative name even if BASET_rate has no other names. If you dont: you will get each letter as a seperate column and t will be overwritten!  
         
         dict_sim_exp = {key: value for keys, value in dict_sim_exp.items() for key in keys}                             
         #simulated values
@@ -500,7 +505,7 @@ class Bacillus_vf(Model):     #Dependent on base class
     
     def simulate(self, experiment = None, t_grid = None, y0 = None, p = None,  c = None, yields = None
     , kwargs_solve_ivp = dict(method= "Radau", first_step = 0.0000001, max_step= 0.1)       # kwargs_solve_ivp may have to be adapted
-    , t_step = 1000, endpoint = None, **kwargs_solve_ivp_given):  
+    , t_step = 10, endpoint = None, **kwargs_solve_ivp_given):  
 
         """
         Simulates values by calling the observation function, it is possible to simulate manually by using values for t_grid, p, y0 c and yields or via an Experiment object. 
