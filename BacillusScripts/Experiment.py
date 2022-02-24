@@ -4,7 +4,7 @@ import glob
 import os.path
 import warnings
 from copy import deepcopy
-from scipy.interpolate import interp1d
+
 
 #ELELE
 
@@ -156,8 +156,7 @@ class Experiment:
             self.calc_rate(*("off",("RF [mg/L]")))
             self.calc_rate(*("off",("CDW_calc")))
             
-        self.calc_Fout()      
-    
+            
       
     
     def time_filter(self, dskey, start = None, end = None):
@@ -244,15 +243,7 @@ class Experiment:
 
         self.dataset[dskey] = df
         
-    def calc_Fout(self):
-        
-        if "SampleVolume [g]" in self.dataset["off"]:
-            f = pd.to_numeric(self.dataset["off"]["SampleVolume [g]"], downcast="float" , errors="coerce")
-            # calculate outflow in g/h or mL/h assuming  fermentation broth density of 1 g/mL
-            f_rate = f / np.diff(f.index, prepend =1)
-            self.dataset["Fout"] = interp1d(x = f_rate.index, y = f_rate, fill_value = (f_rate.iloc[0], f_rate.iloc[-1]) , bounds_error= False)
-            self.dataset["on"]["Fout"] = self.dataset["Fout"](self.dataset["on"].index)
-            self.dataset.pop("Fout")
+    
         
         
 

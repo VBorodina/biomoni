@@ -54,7 +54,7 @@ class Experiment:
     , types = {"off" : "offline.csv", "on": "online.CSV", "CO2" : "CO2.dat"}
     , index_ts = {"off" : 0, "on": 1, "CO2" : 0}
 
-    , read_csv_settings = { "off" : dict(sep=";", encoding= 'unicode_escape', header = 0, skiprows=[1], usecols = None)
+    , read_csv_settings = { "off" : dict(sep=";", encoding= 'unicode_escape', header = 0, skiprows= None, usecols = None)
     , "on": dict(sep=";",encoding= "unicode_escape",decimal=",", skiprows=[2,3] , skipfooter=1, usecols = None, engine="python", header= [0,1])
     , "CO2" : dict(sep=";", encoding= "unicode_escape", header = 0, skiprows=[0], usecols=[0,2,4], names =["ts","CO2", "p"])    }
 

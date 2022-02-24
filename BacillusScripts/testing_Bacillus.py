@@ -1,6 +1,6 @@
 import sys
 sys.path.append("V:/biomoni/")                      #without this line windows could not acces the package 
-from BacillusScripts.Experiment import Experiment
+from biomoni import Experiment
 from BacillusScripts.BacillusVariableFeedrate import Bacillus_vf
 from BacillusScripts.visualizationBacillus import visualizeBacillusFermentation
 import pandas as pd
@@ -9,7 +9,7 @@ from IPython.display import display
 
 path = r"V:/biomoni/BacillusData/Stamm185"
 
-experiment_dict_for_estimation = {exp : Experiment(path, exp,endpoint = "F_end") for exp in ["F1", "F2", "F3", "F4", "F5" ]}  #all experiments in a dictionary   
+experiment_dict_for_estimation = {exp : Experiment(path, exp, endpoint = "F_end") for exp in ["F1", "F2", "F3", "F4", "F5" ]}  #all experiments in a dictionary   
 experiment_dict_for_graphs = {exp : Experiment(path, exp, endpoint = "F_end") for exp in ["F1", "F2", "F3", "F4", "F5" ]} 
 
 
