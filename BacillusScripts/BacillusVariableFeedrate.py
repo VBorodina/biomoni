@@ -81,32 +81,30 @@ class Bacillus_vf(Model):     #Dependent on base class
         if p is None:          
 
             p = Parameters()
-           # p.add("qsmax", value= 1.61290497, min=0.01, max=5.0 , vary = True)     #Maximum glucose uptake rate [g/(g*h)]   #previous start val: 0.1  #estimated value: 1.61290497
-           # p.add("qemax", value=0.2361, min=0.15, max=0.35, vary=False)    #Maximum ethanol uptake rate [g/(g*h)]       #value=0.2361, min=0.15, max=0.35, vary=True # value=0.05, min=0.001, max=0.5,  vary=True geht
+           # p.add("qsmax", value= 1.61290497, min=0.01, max=5.0 , vary = False)     #Maximum glucose uptake rate [g/(g*h)]   #previous start val: 0.1  #estimated value: 1.61290497
+           # p.add("rP", value=0.1, min=0.01, max=10, vary=True)    #Production rate [g/(g*h)]     
 
            # p.add("base_coef", value= 0.00733798 , min=0.0001, max =3, vary = True)     #base coefficient [mol/g]     #previous start val: 1 #estimated value: 0.00733798      
            # p.add("qO2max", value= 0.16473635, min=0.1, max=0.4, vary = True)    #Maximum oxygen uptake rate [g/(g*h)]  , min=0.1  0.1, 0.4  #previous start val: 0.255984, 1 #estimated value: 0.17451356
            # p.add("qm_max", value=0.01, min=0.0075, max=0.0125, vary = False)  #glucose uptake rate required for maintenance [g/(g*h)]  
             
-           # p.add("Ks", value=0.1, min=0.01, max=1,  vary=False)   #Saturation constant, concentration of glucose at µ = 0.5 µmax [g/L]
+            p.add("Km", value=0.1, min=0.01, max=1,  vary=False)   #Saturation constant, concentration of glucose at µ = 0.5 µmax [g/L]
            # p.add("Ke", value=0.1, min=0.01, max=1, vary=False)    #Saturation constant, concentration of ethanol at µ = 0.5 µmax [g/L]
            # p.add("Ki", value=0.1, min=0.01, max=1, vary=False)    #Inhibition constant, glucose inhibits uptake of ethanol [g/L]
 
-           # p.add("Yxs_ox", value= 0.52792125, min=0.3, max=0.6, vary=True) #Yield biomass per glucose (oxidative growth) [g/g] #previous start val: 49    #estimated value 0.52792125
-            p.add("Yxs", value=0.05, min=0.01, max=0.8, vary=False)    #Yield biomass per glucose [g/g] 
-           # p.add("Yxe_et", value=0.72, min=0.5, max=0.8, vary=False)      #Yield biomass per ethanol [g/g]
-           # p.add("Yxg_glyc", value=0.2, min=0.1, max=0.35, vary=False)    #Yield biomass per glycerol [g/g]              #value=0.2, min=0.1, max=0.35, vary=False
+           
+            p.add("Yxs", value=0.1, min=0.0001, max=10, vary=True)    #Yield biomass per glucose [g/g]
+            p.add("Yxp", value= 0.0005, min= 0.000001, max= 10, vary= True)   #Yield RF per biomass [mg/g]
+            
 
             #Biomass composition paramaters, content H,O,N from paper sonnleitner
 
-           # p.add("HX", value=1.79, min=1.77, max=2.1, vary=False) #Stoichiometric hydrogen content of biomass [mol/mol]
-           # p.add("OX", value=0.57, min=0.54, max=0.63, vary=False) #Stoichiometric oxygen content of biomass [mol/mol]     
-           # p.add("NX", value=0.15, min=0.14, max=0.16, vary=False) #Stoichiometric nitrogen content of biomass [mol/mol]
-
-           # p.add("g_e", value=0.21636282532087284, min=0.17624196916440354, max=0.2883951412907231, vary=False) #determined experimentally: formation glycerol per ethanol [g/g]
+            p.add("HX", value=1.79, min=1.77, max=2.1, vary=False) #Stoichiometric hydrogen content of biomass [mol/mol]
+            p.add("OX", value=0.57, min=0.54, max=0.63, vary=False) #Stoichiometric oxygen content of biomass [mol/mol]     
+            p.add("NX", value=0.15, min=0.14, max=0.16, vary=False) #Stoichiometric nitrogen content of biomass [mol/mol]
             
             #Biomassgrowth
-            p.add("mu_max", value= 0.0005, min= 0.00001, max= 3, vary = True)               #EINHEIT?! g/h?
+            p.add("mu_max", value= 0.005, min= 0.001, max= 3, vary = True)               #EINHEIT?! g/h?
 
             self.p = p
             
@@ -115,7 +113,8 @@ class Bacillus_vf(Model):     #Dependent on base class
             assert isinstance(p, type(Parameters())), "Given parameters must be of type lmfit.parameter.Parameters"
             self.p = p
         
-       #self.yields = self.chemical_balancing(self.p)
+       
+    
 
 
     def create_settings(self, experiment):
@@ -140,7 +139,7 @@ class Bacillus_vf(Model):     #Dependent on base class
 
         return settings
         
-        
+   
 
     def calc_mean_pressure(self, experiment):
         """Calculates the CO2 mean pressure in the BlueSens sensor for all time points.
@@ -185,7 +184,7 @@ class Bacillus_vf(Model):     #Dependent on base class
         
         """
 
-        c = {"feed_%_to_mL" : experiment.metadata.loc["feed_%_to_mL"],"feed_on" : experiment.metadata.loc["tsfeedOn"], "feed_rate_mL_to_g" : experiment.metadata.loc["feed_rate_mL_to_g"], "csf" : experiment.metadata.loc["csf"]
+        c = {"feed_%_to_mL" : experiment.metadata.loc["feed_%_to_mL"],"feed_on" : experiment.metadata.loc["tsfeedOn"], "add_IPTG": experiment.metadata.loc["add_IPTG"], "feed_rate_mL_to_g" : experiment.metadata.loc["feed_rate_mL_to_g"], "csf" : experiment.metadata.loc["csf"]
         , "cNH3" : experiment.metadata.loc["cNH3"], "gas_flow_lpm" : experiment.metadata.loc["gas_flow"], "T" : experiment.metadata.loc["T"]}
         
         c["gas_flow"] = c["gas_flow_lpm"] * 60 #turn  Lpm to L/h
@@ -194,11 +193,43 @@ class Bacillus_vf(Model):     #Dependent on base class
 
         feedpump_power = pd.to_numeric(experiment.dataset_raw["on"]["SUBS_A2","Value"] , downcast="float" , errors="coerce") #in some experiments the feed_pump from MFCS was recognized as string instead of float...
         #feedpump_power.fillna(0)       #nan values to zero
-        feedrate = feedpump_power * c["feed_%_to_mL"] * c["feed_rate_mL_to_g"]
-        c["feedrate_function"] = interp1d(x = feedrate.index, y = feedrate, fill_value = (feedrate.iloc[0], feedrate.iloc[-1]) , bounds_error= False) #create interpolation function which can be called in the kinetics function at specific time points. if t < first value y assumes first value, if t > last value y assumes last value
+        feedrate = (feedpump_power * c["feed_%_to_mL"] * 60) / 1000                             #Feedrate in [L/h]
+        feedrate_glc = feedrate * c["csf"]                                                      #Feedrate of pure Glucose in [g/h]
+        #create interpolation function which can be called in the kinetics function at specific time points. if t < first value y assumes first value, if t > last value y assumes last value
+        c["feedrate_glc"] = interp1d(x = feedrate_glc.index, y = feedrate_glc, fill_value = (feedrate_glc.iloc[0], feedrate_glc.iloc[-1]) , bounds_error= False)
+        c["feedrate_volume"] = interp1d(x = feedrate.index, y = feedrate, fill_value = (feedrate.iloc[0], feedrate.iloc[-1]) , bounds_error= False)
+        
+        if "SampleVolume [g]" in experiment.dataset["off"]:
+            c["Fout"] = self.calc_Fout(experiment)
 
 
         return c  
+
+    def calc_Fout(self, experiment):
+            
+            if "SampleVolume [g]" in experiment.dataset["off"]:
+                
+                b = experiment.dataset["off"]["SampleVolume [g]"]
+
+                #turning Sample Volume into Flowrate L/h that is necessry to flow for a period of 3 min to result the amount of Sample VOlume
+                c= pd.DataFrame(b*40/1000)
+                c = c.rename(columns={"SampleVolume [g]":"VolumeFlow [mL/h]"})
+
+                e_after= [x + 0.025 for x in c.index]
+                e_before = [x - 0.025 for x in c.index]
+            
+                for i in e_after:
+                    c.loc[i]= 0
+
+                for i in e_before:
+                    c.loc[i]=0
+
+                Flow_raw= c.sort_index(axis ="index")
+                
+
+                Flow = interp1d(x = Flow_raw.index, y = Flow_raw["VolumeFlow [mL/h]"] ,fill_value = (Flow_raw.iloc[0], Flow_raw.iloc[-1]), bounds_error= False)
+                return Flow
+
 
     def create_y0(self, experiment):
         """Creates initial state vector.
@@ -209,7 +240,7 @@ class Bacillus_vf(Model):     #Dependent on base class
         
         """
 
-        y0 = list(experiment.metadata.loc[["mX0","mS0","V0"]].values)
+        y0 = list(experiment.metadata.loc[["mX0","mS0","mP0", "V0"]].values)           #mX0 [g], mS0 [g], mP0 [mg], V0 [L]
         
         return y0
 
@@ -221,10 +252,10 @@ class Bacillus_vf(Model):     #Dependent on base class
         :type t: float
         :param y: State vector:
 
-            * y[0] : Substrate mass (mS) [g]  
-            * y[1] : Bio dry mass (mX) [g]
-            * y[2] : Product mass(mP), in this case Riboflavin [mg]
-            * y[3] : Volume of fermentation broth [L]
+            * y[1] : Substrate mass (mS) [g]  
+            * y[0] : Bio dry mass (mX) [g]
+            * y[3] : Product mass(mP), in this case Riboflavin [mg]
+            * y[2] : Volume of fermentation broth [L]
 
         :type y:     array like
         :param p:    Structure with parameter values to be estimated, cf. lmfit.parameter.Parameters
@@ -247,33 +278,51 @@ class Bacillus_vf(Model):     #Dependent on base class
         :param yields: Calculated yields coefficients
         :type yields: dict 
                 
-        :return: cS, cX, cE, V, Fin, qsOx, qsRed, muTotal, qe, qCO2, qm: Substance concentrations and kinetic rates at time t. 
+        :return:______________  Substance concentrations and kinetic rates at time t. 
         """
 
         # fit parameters
         mu_max = p["mu_max"].value
         Yxs = p["Yxs"].value
+        Km = p["Km"].value
+        Yxp = p["Yxp"].value
         
         # controls
         #feed_on = c["feed_on"] # time point when feed was switched on [h]
         #feed_rate = c["feed_rate"] # feed rate [L/h]
         #Fin = feed_rate * (t > feed_on) # becomes 0 if t < feed_on    #this was used in Yeast.py when using a constant feedrate
-        Fin = c["feedrate_function"](t) #this is used when the feed rate changes over time: for Valeria 
+        
+        Fin = c["feedrate_volume"](t) #this is used when the feed rate changes over time: for Valeria 
         Fin = np.nan_to_num(Fin)        #if Nan oder infer values are generated, it cant be colved by solve_ivp anymore
         
-
+        if "Fout" in c:
+            Fout = c["Fout"](t)
+            Fout = np.nan_to_num(Fout)
+        else:
+            Fout = 0  
         # masses and concentrations 
                 
-        mX, mS, V = y           
-        cX, cS = [mX, mS] / V 
+        mX, mS, mP, V = y           
+        cS = [mS] / V 
 
-        #kinetics
+        #kinetics [-]
+        mu_Mo = cS / (Km + cS)
+        
 
-
-        #growth rates
-        mu = mu_max
-     
-        return cX, V, Fin, mu, cS 
+        #growth rates [1/h]
+        mu = mu_max * mu_Mo
+        
+        #Biomass growth [g/h]
+        rX = mu * mX
+        
+        #SUbstrate consumption [g/h]
+        rS = -rX * 1/Yxs
+        
+        #Product formation [mg/h]
+        rP = rX * 1/Yxp
+        
+        
+        return Fin, Fout, rS, rP, rX, rP,V 
 
 
     def model_rhs(self, t, y, p, c, yields):
@@ -283,10 +332,10 @@ class Bacillus_vf(Model):     #Dependent on base class
         :type t: float
         :param y: State vector:
 
-            * y[0] : Substrate mass (mS) [g]  
-            * y[1] : Bio dry mass (mX) [g]
-            * y[2] : Product mass(mP), in this case Riboflavin [mg]
-            * y[3] : Volume of fermentation broth [L]
+            * y[1] : Substrate mass (mS) [g]  
+            * y[0] : Bio dry mass (mX) [g]
+            * y[3] : Product mass(mP), in this case Riboflavin [mg]
+            * y[2] : Volume of fermentation broth [L]
 
         :type y: array like
         :param p: Structure with parameter values to be estimated, cf. lmfit.parameter.Parameters
@@ -312,16 +361,18 @@ class Bacillus_vf(Model):     #Dependent on base class
         :return: dy_dt: Time derivative of state vector.
         """
         
-       # csf = c["csf"] # substrate concentration in feed [g/L]  
+        csf = c["csf"] # substrate concentration in feed [g/L]  
         
 
-        cX, V, Fin, mu, Yxs = self.kinetics(t, y, p, c)   
+        Fin, Fout, rS, rP, rX, rP, V = self.kinetics(t, y, p, c)   
     
           
-        dmX_dt = mu * cX * V
-        dV_dt  = + Fin        #later: insert here Fout = V Sample at distinct timepoints
-        dmS_dt = -mu * 1/Yxs
-        return dmX_dt, dV_dt, dmS_dt
+        dmX_dt = rX 
+        dV_dt  = Fin - Fout       #later: insert here Fout = V Sample at distinct timepoints
+        dmS_dt = rS + (Fin * csf) 
+        dmP_dt = rP 
+        
+        return dmX_dt, dmS_dt, dmP_dt, dV_dt
 
     def calc_CO2(self, t, y, p, c, yields):
         """ This function calculates the CO2 pressure in the reactor in vol. % by processing the outcome of the kinetics function.
@@ -330,10 +381,10 @@ class Bacillus_vf(Model):     #Dependent on base class
         :type t: float
         :param y: State vector:
 
-            * y[0] : Substrate mass (mS) [g]  
-            * y[1] : Bio dry mass (mX) [g]
-            * y[2] : Product mass(mP), in this case Riboflavin [mg]
-            * y[3] : Volume of fermentation broth [L]
+            * y[1] : Substrate mass (mS) [g]  
+            * y[0] : Bio dry mass (mX) [g]
+            * y[3] : Product mass(mP), in this case Riboflavin [mg]
+            * y[2] : Volume of fermentation broth [L
 
         :type y: array like
         :param p: Structure with parameter values to be estimated, cf. lmfit.parameter.Parameters
@@ -368,8 +419,10 @@ class Bacillus_vf(Model):     #Dependent on base class
         M_CO2 = 44.01     #g/mol
 
         cX, V, Fin, mu = self.kinetics(t, y, p, c)
+        
+        qCO2 = 1                                        # qCO2 sollte in kinetics() berechnet werden, 1 ist nur als lückenfüller da 
 
-        #ideal gas quation to calculate CO2
+        #ideal gas equation to calculate CO2
         dmCO2_dt = qCO2 * cX * V
         dnCO2_dt = dmCO2_dt/M_CO2
         dvCO2_dt = (dnCO2_dt*R*T)/pressure
@@ -386,10 +439,10 @@ class Bacillus_vf(Model):     #Dependent on base class
         :param y0: Initial state vector:
 
             
-            * y[0] : Substrate mass (mS) [g]  
-            * y[1] : Bio dry mass (mX) [g]
-            * y[2] : Product mass(mP), in this case Riboflavin [mg]
-            * y[3] : Volume of fermentation broth [L]
+            * y[1] : Substrate mass (mS) [g]  
+            * y[0] : Bio dry mass (mX) [g]
+            * y[3] : Product mass(mP), in this case Riboflavin [mg]
+            * y[2] : Volume of fermentation broth [L
 
         :type y: array like
         :param p: Structure with parameter values to be estimated, cf. lmfit.parameter.Parameters
@@ -419,22 +472,23 @@ class Bacillus_vf(Model):     #Dependent on base class
         
         """
         #result of IVP solver
-        y_t = solve_ivp(self.model_rhs, [np.min(t_grid), np.max(t_grid)], y0, t_eval=t_grid, args = (p, c, yields), **kwargs_solve_ivp).y.T
+        y_t = solve_ivp(self.model_rhs, [0, np.max(t_grid)], y0, t_eval=t_grid, args = (p, c, yields), **kwargs_solve_ivp).y.T
     
 
         # unpack solution into vectors
-        mX, V = [y_t[:,i] for i in range(2)]
-        cX  = mX / V
+        mX, mS, mP, V= [y_t[:,i] for i in range(4)]
+        cX, cS, cP  = [mX, mS, mP] / V
+        
 
-        dmX_dt = np.array([self.model_rhs(t = t_grid[i], y = y_t[i,:], p = p, c = c, yields = yields) for i in range(len(t_grid))])[:,1]  #calc dmX_dt from model funcs
-        BASET_rate = dmX_dt * 1000  #base_rate in ml/h
+        #dmX_dt = np.array([self.model_rhs(t = t_grid[i], y = y_t[i,:], p = p, c = c, yields = yields) for i in range(len(t_grid))])[:,0]  #calc dmX_dt from model funcs
+        #BASET_rate_wrong = dmX_dt * 1000  #base_rate in ml/h
 
        # CO2_percent = np.array([self.calc_CO2(t = t_grid[i], y = y_t[i,:], p = p, c = c, yields = yields) for i in range(len(t_grid))])     #CO2 in vol.% from calc_CO2
 
         
-        dict_sim_exp = {("t"): t_grid, ("V"): V, ("cX", "CDW_calc"):cX, ("BASET_rate","BASE"):BASET_rate}          #necessary to extend the dict if col names are different in offline/online datasets for different Fermentation runs, warning: give BASET_rate column also another alternative name
-        dict_sim_exp = {key: value for keys, value in dict_sim_exp.items() for key in keys}                             #even if BASET_rate has no other names. If you dont: you will get each letter as a seperate column and t will be overwritten!  
+        dict_sim_exp = {("t"): t_grid, ("V"): V, ("cX", "CDW_calc"):cX, ("BASET_rate","BASE"): 1, ("cS", "S"): cS,("cP","P"): cP}                 #necessary to extend the dict if col names are different in offline/online datasets for different Fermentation runs, warning: give BASET_rate column also another alternative name even if BASET_rate has no other names. If you dont: you will get each letter as a seperate column and t will be overwritten!  
         
+        dict_sim_exp = {key: value for keys, value in dict_sim_exp.items() for key in keys}                             
         #simulated values
         sim_exp = pd.DataFrame(dict_sim_exp).set_index("t")           
         
