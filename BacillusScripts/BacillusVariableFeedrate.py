@@ -95,13 +95,14 @@ class Bacillus_vf(Model):     #Dependent on base class
            
             p.add("Yxs", value=0.1, min=0.0001, max=10, vary=True)    #Yield biomass per glucose [g/g]
             p.add("Yxp", value= 0.0005, min= 0.000001, max= 10, vary= True)   #Yield RF per biomass [mg/g]
+            p.add("Yxsmain",value = 0.002, min= 0.0001, max=10, vary=True)
             
 
             #Biomass composition paramaters, content H,O,N from paper sonnleitner
 
-            p.add("HX", value=1.79, min=1.77, max=2.1, vary=False) #Stoichiometric hydrogen content of biomass [mol/mol]
-            p.add("OX", value=0.57, min=0.54, max=0.63, vary=False) #Stoichiometric oxygen content of biomass [mol/mol]     
-            p.add("NX", value=0.15, min=0.14, max=0.16, vary=False) #Stoichiometric nitrogen content of biomass [mol/mol]
+            #p.add("HX", value=1.79, min=1.77, max=2.1, vary=False) #Stoichiometric hydrogen content of biomass [mol/mol]
+            #p.add("OX", value=0.57, min=0.54, max=0.63, vary=False) #Stoichiometric oxygen content of biomass [mol/mol]     
+            #p.add("NX", value=0.15, min=0.14, max=0.16, vary=False) #Stoichiometric nitrogen content of biomass [mol/mol]
             
             #Biomassgrowth
             p.add("mu_max", value= 0.005, min= 0.001, max= 3, vary = True)               #EINHEIT?! g/h?
@@ -112,9 +113,82 @@ class Bacillus_vf(Model):     #Dependent on base class
 
             assert isinstance(p, type(Parameters())), "Given parameters must be of type lmfit.parameter.Parameters"
             self.p = p
+            
+        self.yields = self.chemical_balancing(self.p)
         
        
-    
+    def chemical_balancing(self,p):
+        """Calculate yield coefficients from p for the following metabolic pathways:
+
+        1. (ox) : Oxidative glucose consumption
+        2. (red) : Reductive glucose consumption
+        3. (et) : Ethanol consumption
+        4. (glyc) : Glycerol consumption
+        5. (m) : Maintenence metabolism
+
+        :param p: Parameters 
+        :type p: lmfit.parameter.Parameters object
+
+        :return: yields: Yields coefficients of metabolic pathways
+        """
+        
+        #Order:         C,      H,      O,      N numbers of atoms in the molecule e.g. glucose : C6H12O6N0
+        gluc = np.array([6.0,   12.0,   6.0,    0.0])
+        O2 = np.array([0.0,     0.0,     2.0,   0.0])
+        NH3 = np.array([0.0,    3.0,    0.0,    1.0])
+        biomass = np.array([1.0,p["HX"].value, p["OX"].value, p["NX"].value])
+        CO2 = np.array([1.0,    0.0,    2.0,    0.0])
+        H2O = np.array([0.0,    2.0,    1.0,    0.0])
+        etoh = np.array([2.0,   6.0,    1.0,    0.0])
+        glyc = np.array([3.0,   8.0,    3.0,    0.0])
+
+
+        #Required yields to solve linear equation system taken from p
+        yields = {"Yxs": p["Yxs"].value, 
+                  "Yxp" : p["Yxp"].value, 
+                  "Yxsmain" : p["Yxsmain"].value}
+        
+        MW_element_dict = {"C": 12.011, "H": 1.0079, "O": 15.999, "N": 14.007}        #molar masses of elements
+        molecule = {"gluc": gluc, "O2": O2, "NH3" : NH3, "biomass": biomass, "CO2" : CO2, "H2O":  H2O, "etoh": etoh, "glyc": glyc} #molecules dict
+        
+        MW = {}           #MW = molar weights: dict with masses of molecules
+        for key, mol in molecule.items():
+            molecule_MW_array = ([])
+            for vectorvalue, weight in zip (mol, MW_element_dict.values()):
+                vw = vectorvalue*weight
+                molecule_MW_array= np.append(molecule_MW_array, vw)
+            MW[key] = sum(molecule_MW_array)
+            
+        NX1 = p["NX"].value #NX1 because NX is reserved for the symbol letter NX from sympy to solve the equation
+       
+        #1. oxidative glucose consumption: gluc+ a*O2 + b*NX*NH3 = b*biomass + c*CO2 + d*H2O 
+        a,b,c,d, NX = symbols("a b c d NX")         #set symbols to solve equation
+        Yxs_ox = p["Yxs_ox"].value
+        b1 = Yxs_ox* MW["gluc"]/MW["biomass"]     #calculate stoichiometric coefficient from mass related yield coefficient
+
+        eqOx_list = []
+        for num in range(3):        #Set up reaction equations three times because three unknowns are present
+            eqOx = Eq(gluc[num]+ a*O2[num]+ b*NX*NH3[num], b*biomass[num]+ c*CO2[num]+ d*H2O[num])
+            eqOx = eqOx.subs({b: b1, NX: NX1})
+            eqOx_list.append(eqOx)
+        
+        solution_Ox = sp.solve(eqOx_list, (a, c, d), dict= True)        #solve equation system
+        a1, c1, d1 = np.float(solution_Ox[0][a]), np.float(solution_Ox[0][c]), np.float(solution_Ox[0][d])  #assign results to variables
+
+        YCO2x_ox = c1/b1 * MW["CO2"]/MW["biomass"]
+        YCO2s_ox = c1/1 * MW["CO2"]/MW["gluc"]
+        YO2s_ox = a1/1 * MW["O2"]/MW["gluc"]
+        
+        yields["YCO2x_ox"], yields["YCO2s_ox"], yields["YO2s_ox"] = YCO2x_ox, YCO2s_ox, YO2s_ox 
+        
+         #5. maintenance metabolism : gluc + 6*O2 = 6*CO2 + 6*H2O
+
+        YCO2s_m = 6 * MW["CO2"]/MW["gluc"]
+  
+
+        yields["YCO2s_m"] = YCO2s_m
+        
+        return yields
 
 
     def create_settings(self, experiment):
@@ -211,12 +285,12 @@ class Bacillus_vf(Model):     #Dependent on base class
                 
                 b = experiment.dataset["off"]["SampleVolume [g]"]
 
-                #turning Sample Volume into Flowrate L/h that is necessry to flow for a period of 3 min to result the amount of Sample VOlume
-                c= pd.DataFrame(b*40/1000)
+                #turning Sample Volume into Flowrate L/h that is necessry to flow for a period of 10 min to result the amount of Sample VOlume
+                c= pd.DataFrame(b*0.012)
                 c = c.rename(columns={"SampleVolume [g]":"VolumeFlow [mL/h]"})
 
-                e_after= [x + 0.025 for x in c.index]
-                e_before = [x - 0.025 for x in c.index]
+                e_after= [x + (5/60) for x in c.index]
+                e_before = [x - (5/60) for x in c.index]
             
                 for i in e_after:
                     c.loc[i]= 0
@@ -286,6 +360,7 @@ class Bacillus_vf(Model):     #Dependent on base class
         Yxs = p["Yxs"].value
         Km = p["Km"].value
         Yxp = p["Yxp"].value
+        Yxsmain = p["Yxsmain"].value
         
         # controls
         #feed_on = c["feed_on"] # time point when feed was switched on [h]
@@ -315,8 +390,10 @@ class Bacillus_vf(Model):     #Dependent on base class
         #Biomass growth [g/h]
         rX = mu * mX
         
+        #Maintanance rate
+        rmainS = mX *1/Yxsmain
         #SUbstrate consumption [g/h]
-        rS = -rX * 1/Yxs
+        rS = -(rX * 1/Yxs + rmainS)
         
         #Product formation [mg/h]
         rP = rX * 1/Yxp
@@ -505,7 +582,7 @@ class Bacillus_vf(Model):     #Dependent on base class
     
     def simulate(self, experiment = None, t_grid = None, y0 = None, p = None,  c = None, yields = None
     , kwargs_solve_ivp = dict(method= "Radau", first_step = 0.0000001, max_step= 0.1)       # kwargs_solve_ivp may have to be adapted
-    , t_step = 10, endpoint = None, **kwargs_solve_ivp_given):  
+    , t_step = 0.001, endpoint = None, **kwargs_solve_ivp_given):  
 
         """
         Simulates values by calling the observation function, it is possible to simulate manually by using values for t_grid, p, y0 c and yields or via an Experiment object. 
