@@ -69,10 +69,10 @@ def visualizeBacillusFermentation(dict_for_graphs):
        
         #fig 3d row, right: Volume, Fout
         
-     fig.add_trace(go.Scatter(x=dfg[exp]["simulated"].index, y=dfg[exp]["simulated"]["V"], mode="lines", name = "Volume", line= dict(color= col_dict["V"], width= 2, dash = "dot"), legendgroup ="group6"), row=3, col=2,secondary_y=True)
+     fig.add_trace(go.Scatter(x=dfg[exp]["simulated"].index, y=dfg[exp]["simulated"]["V"], mode="lines", name = "Volume_simulated", line= dict(color= col_dict["V"], width= 2, dash = "dot"), legendgroup ="group6"), row=3, col=2,secondary_y=True)
        #fig.add_trace(go.Scatter(x=dfg[exp]["on"].index, y=dfg[exp]["on"][("FOAMT_2","Value")], mode="markers", name = "Antifoam", marker= dict(color= col_dict[("FOAMT_2" , "Value")], size= 2, symbol="0"),legendgroup ="group6"),row=3, col=2, secondary_y=False)
-     fig.add_trace(go.Scatter(x=dfg[exp]["on"].index, y=dfg[exp]["on"][("SUBS_A2","Value")], mode="markers", name = "FeedPumpPower", marker= dict(color= col_dict["GlcFeed_rate"], size= 3, symbol="0"), legendgroup ="group7"), row=3, col=2,secondary_y=False)
-     fig.add_trace(go.Scatter(x=dfg[exp]["simulated"].index, y=dfg[exp]["simulated"]["Fout"], mode="markers", name = "Fout", marker= dict(color= col_dict["F_out"], size= 5, symbol="0"),legendgroup ="group6"),row=3, col=2, secondary_y=True)
+     fig.add_trace(go.Scatter(x=dfg[exp]["on"].index, y=dfg[exp]["on"][("SUBS_A2","Value")], mode="markers", name = "FeedPumpPower", marker= dict(color=col_dict["V"], size= 3, symbol="0"), legendgroup ="group7"), row=3, col=2,secondary_y=False)
+     fig.add_trace(go.Scatter(x=dfg[exp]["simulated"].index, y=dfg[exp]["simulated"]["Fout"],  mode="lines", name = "Outflow from Sampling", line= dict(color= col_dict["Baserate"], width= 1, dash="solid"),legendgroup ="group6"),row=3, col=2, secondary_y=True)
      fig.update_yaxes(title_text="Feed Pump Power[%]", row=3, col=2, secondary_y =False, titlefont=dict(size=15), color=col_dict["F_out"],showline=True, linewidth=2, linecolor=col_dict["F_out"],showgrid=True, gridwidth=1, gridcolor="rgb(240,240,240)",zeroline=False,range = [0,10])
      fig.update_yaxes(title_text="Volume [L], Fout [L/h]", row=3, col=2, secondary_y =True, titlefont=dict(size=15), color=col_dict["V"],showline=True, linewidth=2, linecolor=col_dict["V"],showgrid=False, gridwidth=1, gridcolor='LightPink',zeroline=False,range = [0,1.5])
         
