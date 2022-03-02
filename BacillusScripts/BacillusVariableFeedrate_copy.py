@@ -64,7 +64,7 @@ class Bacillus_vf(Model):     #Dependent on base class
         Model.__init__(self)        #in case if Base class has something generic for all classes
         self.set_params()
         self.p_default = deepcopy(self.p)       #deepcopy maybe not necessary
-       # self.yields_default = deepcopy(self.yields)
+        self.yields_default = deepcopy(self.yields)
 
         
 
@@ -93,17 +93,17 @@ class Bacillus_vf(Model):     #Dependent on base class
            # p.add("Ki", value=0.1, min=0.01, max=1, vary=False)    #Inhibition constant, glucose inhibits uptake of ethanol [g/L]
 
            
-            p.add("Yxs", value=0.01, min=0.0001, max=10, vary=True)    #Yield biomass per glucose [g/g]
-            p.add("Yxp", value= 0.0002, min= 0.0001, max= 10, vary= True)   #Yield RF per biomass [mg/g]
-            #p.add("Yxsmain",value = 0.002, min= 0.00001, max=1, vary=True)
+            p.add("Yxs", value=2, min=0.0001, max=10, vary=True)    #Yield biomass per glucose [g/g]
+            p.add("Yxp", value= 0.2, min= 0.0001, max= 10, vary= True)   #Yield RF per biomass [mg/g]
+            p.add("Yxsmain",value = 0.2, min= 0.00001, max=1, vary=True)
             p.add("viab_f", value= 0.7, min = 0.0001, max=1, vary=True)
             
 
             #Biomass composition paramaters, content H,O,N from paper sonnleitner
 
-            #p.add("HX", value=1.79, min=1.77, max=2.1, vary=False) #Stoichiometric hydrogen content of biomass [mol/mol]
-            #p.add("OX", value=0.57, min=0.54, max=0.63, vary=False) #Stoichiometric oxygen content of biomass [mol/mol]     
-            #p.add("NX", value=0.15, min=0.14, max=0.16, vary=False) #Stoichiometric nitrogen content of biomass [mol/mol]
+            p.add("HX", value=1.594, min=1.77, max=2.1, vary=False) #Stoichiometric hydrogen content of biomass [mol/mol]
+            p.add("OX", value=0.387, min=0.54, max=0.63, vary=False) #Stoichiometric oxygen content of biomass [mol/mol]     
+            p.add("NX", value=0.239, min=0.14, max=0.16, vary=False) #Stoichiometric nitrogen content of biomass [mol/mol]
             
             #Biomassgrowth
             p.add("mu_max", value= 0.005, min= 0.001, max= 0.5, vary = True)               #EINHEIT?! g/h?
@@ -115,9 +115,77 @@ class Bacillus_vf(Model):     #Dependent on base class
             assert isinstance(p, type(Parameters())), "Given parameters must be of type lmfit.parameter.Parameters"
             self.p = p
             
-       # self.yields = self.chemical_balancing(self.p)
+        self.yields = self.chemical_balancing(self.p)
         
        
+    def chemical_balancing(self,p):
+        """Calculate yield coefficients from p for the following metabolic pathways:
+
+        1. (ox) : Oxidative glucose consumption
+        5. (m) : Maintenence metabolism
+
+        :param p: Parameters 
+        :type p: lmfit.parameter.Parameters object
+
+        :return: yields: Yields coefficients of metabolic pathways
+        """
+        
+        #Order:         C,      H,      O,      N numbers of atoms in the molecule e.g. glucose : C6H12O6N0
+        gluc = np.array([6.0,   12.0,   6.0,    0.0])
+        O2 = np.array([0.0,     0.0,     2.0,   0.0])
+        NH3 = np.array([0.0,    3.0,    0.0,    1.0])
+        biomass = np.array([1.0,p["HX"].value, p["OX"].value, p["NX"].value])
+        CO2 = np.array([1.0,    0.0,    2.0,    0.0])
+        H2O = np.array([0.0,    2.0,    1.0,    0.0])
+       
+
+
+        #Required yields to solve linear equation system taken from p
+        yields = {"Yxs": p["Yxs"].value, 
+                  "Yxp" : p["Yxp"].value, 
+                  "Yxsmain" : p["Yxsmain"].value}
+        
+        MW_element_dict = {"C": 12.011, "H": 1.0079, "O": 15.999, "N": 14.007}        #molar masses of elements
+        molecule = {"gluc": gluc, "O2": O2, "NH3" : NH3, "biomass": biomass, "CO2" : CO2, "H2O":  H2O} #molecules dict
+        
+        MW = {}           #MW = molar weights: dict with masses of molecules
+        for key, mol in molecule.items():
+            molecule_MW_array = ([])
+            for vectorvalue, weight in zip (mol, MW_element_dict.values()):
+                vw = vectorvalue*weight
+                molecule_MW_array= np.append(molecule_MW_array, vw)
+            MW[key] = sum(molecule_MW_array)
+            
+        NX1 = p["NX"].value #NX1 because NX is reserved for the symbol letter NX from sympy to solve the equation
+       
+        #1. oxidative glucose consumption: gluc+ a*O2 + b*NX*NH3 = b*biomass + c*CO2 + d*H2O 
+        a,b,c,d, NX = symbols("a b c d NX")         #set symbols to solve equation
+        Yxs_ox = p["Yxs"].value
+        b1 = Yxs_ox* MW["gluc"]/MW["biomass"]     #calculate stoichiometric coefficient from mass related yield coefficient
+
+        eqOx_list = []
+        for num in range(3):        #Set up reaction equations three times because three unknowns are present
+            eqOx = Eq(gluc[num]+ a*O2[num]+ b*NX*NH3[num], b*biomass[num]+ c*CO2[num]+ d*H2O[num])
+            eqOx = eqOx.subs({b: b1, NX: NX1})
+            eqOx_list.append(eqOx)
+        
+        solution_Ox = sp.solve(eqOx_list, (a, c, d), dict= True)        #solve equation system
+        a1, c1, d1 = np.float(solution_Ox[0][a]), np.float(solution_Ox[0][c]), np.float(solution_Ox[0][d])  #assign results to variables
+
+        YCO2x_ox = c1/b1 * MW["CO2"]/MW["biomass"]
+        YCO2s_ox = c1/1 * MW["CO2"]/MW["gluc"]
+        YO2s_ox = a1/1 * MW["O2"]/MW["gluc"]
+        
+        yields["YCO2x_ox"], yields["YCO2s_ox"], yields["YO2s_ox"] = YCO2x_ox, YCO2s_ox, YO2s_ox 
+        
+        #5. maintenance metabolism : gluc + 6*O2 = 6*CO2 + 6*H2O
+
+        YCO2s_m = 6 * MW["CO2"]/MW["gluc"]
+  
+
+        yields["YCO2s_m"] = YCO2s_m
+        
+        return yields
 
 
     def create_settings(self, experiment):
@@ -136,7 +204,7 @@ class Bacillus_vf(Model):     #Dependent on base class
         c = self.create_controls(experiment)
 
         #create y0: Initial state vector
-        y0 = self.create_y0(experiment, self.p)
+        y0 = self.create_y0(experiment)
 
         settings = { "wf": wf , "c" : c , "y0": y0 }
 
@@ -171,8 +239,7 @@ class Bacillus_vf(Model):     #Dependent on base class
         df_smallest_len = min(experiment.dataset.values() , key = len)   #return dataframe with smallest length
         weighting_factors = {}
         for dskey in experiment.dataset.keys():
-    
-            weighting_factors[dskey] = len(df_smallest_len) / len(experiment.dataset[dskey]) #weihting factor calculated by len smallest dataframe / len actual dataframe. This results in data frames with different lengths being weighted equally in the estimation.
+            weighting_factors[dskey] = len(df_smallest_len) / len(experiment.dataset[dskey])
       
         return weighting_factors
 
@@ -234,7 +301,7 @@ class Bacillus_vf(Model):     #Dependent on base class
                 return Flow
 
 
-    def create_y0(self, experiment, p):
+    def create_y0(self, experiment):
         """Creates initial state vector.
 
         :param experiment: Experiment object
@@ -245,11 +312,11 @@ class Bacillus_vf(Model):     #Dependent on base class
         #viab_f = p["viab_f"].value
 
         y0 = list(experiment.metadata.loc[["mX0","mS0","mP0", "V0"]].values)        #mX0 [g], mS0 [g], mP0 [mg], V0 [L]
-        #y0[0] = experiment.metadata.loc["mX0"] * viab_f
+        
     
         return y0
 
-    def kinetics(self, t, y, p, c):
+    def kinetics(self, t, y, p, c, yields):
 
         """ r.h.s. (right hand side) function of the ODE model.
 
@@ -291,7 +358,8 @@ class Bacillus_vf(Model):     #Dependent on base class
         Yxs = p["Yxs"].value
         Km = p["Km"].value
         Yxp = p["Yxp"].value
-        #Yxsmain = p["Yxsmain"].value
+        Yxsmain = p["Yxsmain"].value
+        
         
         
         # controls
@@ -326,10 +394,10 @@ class Bacillus_vf(Model):     #Dependent on base class
         rX = mu * mX 
         
         #Substrate consummption for maintanance [g/h]
-        #rmainS = rX *1/Yxsmain
+        rmainS = rX *1/Yxsmain
         
         #SUbstrate consumption for growth [g/h]
-        #rbmS = (rX * 1/Yxs) + rmainS
+        rS = (rX * 1/Yxs) + rmainS
         
         #Substrate consumption [g/h]
         rS = rX * 1/Yxs
@@ -380,7 +448,7 @@ class Bacillus_vf(Model):     #Dependent on base class
         csf = c["csf"] # substrate concentration in feed [g/L]  
         
 
-        Fin, Fout, rS, rP, rX, rP, V = self.kinetics(t, y, p, c)   
+        Fin, Fout, rS, rP, rX, rP, V = self.kinetics(t, y, p, c, yields)   
     
           
         dmX_dt = rX 
@@ -434,7 +502,7 @@ class Bacillus_vf(Model):     #Dependent on base class
         pressure = c["pressure"] #bar
         M_CO2 = 44.01     #g/mol
 
-        cX, V, Fin, mu = self.kinetics(t, y, p, c)
+        cX, V, Fin, mu = self.kinetics(t, y, p, c, yields)
         
         qCO2 = 1                                        # qCO2 sollte in kinetics() berechnet werden, 1 ist nur als lückenfüller da 
 
@@ -582,7 +650,7 @@ class Bacillus_vf(Model):     #Dependent on base class
                 
             
         elif experiment is None:    #This if statement is to simulate with given t,y,p,c (used in the estimate process because it would require more computational power to calculate t, y and c within each estimate iteration)
-            for i in [t_grid, p , y0, c]:
+            for i in [t_grid, p , y0, c, yields]:
                 if i is None:
                     raise ValueError("If no Experiment is given, it is necessary to give t_grid, p , y0, c and yields in order to simulate")
 
@@ -591,7 +659,7 @@ class Bacillus_vf(Model):     #Dependent on base class
         assert isinstance(y0, (np.ndarray, list)), "y0 must be either of type np.ndarray or list"
         assert isinstance(p, type(Parameters())), "Given parameters must be of type lmfit.parameter.Parameters"
         assert isinstance(c, dict), "c must be a dictionary"
-       # assert isinstance(yields, dict), "yields must be a dictionary"
+        assert isinstance(yields, dict), "yields must be a dictionary"
 
 
         sim_exp = self.observation(t_grid, y0, p, c, yields, **kwargs_solve_ivp)
@@ -623,6 +691,7 @@ class Bacillus_vf(Model):     #Dependent on base class
 
         res_all = []
         viab_f = p["viab_f"].value
+        viab_f = p["viab_f"].value
         for exp_id, dataset in datasets_dict.items():
             
             res_single = np.array([]) #empty array which will contain residuals
@@ -635,7 +704,7 @@ class Bacillus_vf(Model):     #Dependent on base class
             for dskey, dat in dataset.items():   #extract data for ("on", "off", "CO2") for each experiment
                 wf = weighting_factors[dskey]       #single weighting factor       
                 t_grid = dat.index.values           #extract time from dataframe
-                sim_exp = self.simulate(None, t_grid, y0, p, c, kwargs_solve_ivp = kwargs_solve_ivp)
+                sim_exp = self.simulate(None, t_grid, y0, p, c, yields, kwargs_solve_ivp = kwargs_solve_ivp)
 
                 if tau is not None:     
                     weighting_decay = np.exp( (dat.index-np.max(dat.index) ) / tau)  #calculating exponential weighting decay 
@@ -644,7 +713,7 @@ class Bacillus_vf(Model):     #Dependent on base class
 
                 for var in dat:     #loop over measured variables (columns)
                     if var in sim_exp.columns:
-                        res_var = (wf * (sim_exp[var] - dat[var]).values)/dat[var].values * weighting_decay   # weighted residuals for this measured variable
+                        res_var = ((wf * (sim_exp[var] - dat[var]).values)/dat[var].values) * weighting_decay   # weighted residuals for this measured variable
                         res_single = np.append(res_single, res_var) # append to long residual vector
                     else:
                         pass

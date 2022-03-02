@@ -1,7 +1,7 @@
 import sys
 sys.path.append("V:/biomoni/")                      #without this line windows could not acces the package 
 from biomoni import Experiment
-from BacillusScripts.BacillusVariableFeedrate import Bacillus_vf
+from BacillusScripts.BacillusVariableFeedrate_copy import Bacillus_vf
 from BacillusScripts.visualizationBacillus import visualizeBacillusFermentation
 import pandas as pd
 import numpy as np
@@ -9,8 +9,8 @@ from IPython.display import display
 
 path = r"V:/biomoni/BacillusData/Stamm185"
 
-experiment_dict_for_estimation = {exp : Experiment(path, exp) for exp in ["F1", "F2", "F3", "F4", "F5" ]}  #all experiments in a dictionary   
-experiment_dict_for_graphs = {exp : Experiment(path, exp, endpoint = "F_end") for exp in ["F1", "F2", "F3", "F4", "F5" ]} 
+experiment_dict_for_estimation = {exp : Experiment(path, exp,endpoint = "Sim_end") for exp in ["F1"]}  #all experiments in a dictionary   
+experiment_dict_for_graphs = {exp : Experiment(path, exp, endpoint = "Sim_end") for exp in ["F1"]} 
 
 
 #Exp = experiment_dict 
@@ -18,7 +18,7 @@ b= Bacillus_vf()
 b.estimate(experiment_dict_for_estimation)
 b.report()
 
-t_grid = np.linspace(0,65,101) 
+t_grid = np.linspace(0,40,1001) 
 sim_dict_all = {experiment.exp_id: b.simulate(experiment = experiment, t_grid = t_grid) for experiment in experiment_dict_for_estimation.values()} 
 
 sim_list=list(sim_dict_all.values())
