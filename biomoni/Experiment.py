@@ -128,8 +128,10 @@ class Experiment:
         for typ, p in file_path.items():
             if os.path.isfile(p):   #checking if the file in the experiment folder even exists              #Gefährlich try except
                 self.dataset[typ] = self.read_data(path = p, index_ts = index_ts[typ], read_csv_settings = read_csv_settings[typ], to_datetime_settings = to_datetime_settings[typ])
+                self.dataset[typ].replace('#DIV/0!', np.nan, inplace=True)
             else:
                 warnings.warn("The file {0} could not be found within the Experiment folder: {1}".format(types[typ], dir))
+
 
         metadata_all = pd.read_excel(os.path.join(path, meta_path), index_col = 0, **read_excel_settings)
         metadata_all = metadata_all.astype(object).where(metadata_all.notnull(), None)  #load metadata and replace NaN and NaT values with None required for adequate time filtering in time_filter
