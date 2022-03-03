@@ -93,8 +93,8 @@ class Bacillus_vf(Model):     #Dependent on base class
            # p.add("Ki", value=0.1, min=0.01, max=1, vary=False)    #Inhibition constant, glucose inhibits uptake of ethanol [g/L]
 
            
-            p.add("Yxs", value=2, min=0.0001, max=10, vary=True)    #Yield biomass per glucose [g/g]
-            p.add("Yxp", value= 0.2, min= 0.0001, max= 10, vary= True)   #Yield RF per biomass [mg/g]
+            p.add("Yxs", value=0.3, min=0.0001, max=10, vary=True)    #Yield biomass per glucose [g/g]
+            p.add("Yxp", value= 0.02, min= 0.0001, max= 10, vary= True)   #Yield RF per biomass [mg/g]
             p.add("Yxsmain",value = 0.2, min= 0.00001, max=1, vary=True)
             p.add("viab_f", value= 0.7, min = 0.0001, max=1, vary=True)
             
@@ -106,7 +106,7 @@ class Bacillus_vf(Model):     #Dependent on base class
             p.add("NX", value=0.239, min=0.14, max=0.16, vary=False) #Stoichiometric nitrogen content of biomass [mol/mol]
             
             #Biomassgrowth
-            p.add("mu_max", value= 0.005, min= 0.001, max= 0.5, vary = True)               #EINHEIT?! g/h?
+            p.add("mu_max", value= 0.15, min= 0.001, max= 0.5, vary = True)               #EINHEIT?! g/h?
 
             self.p = p
             
@@ -238,8 +238,13 @@ class Bacillus_vf(Model):     #Dependent on base class
 
         df_smallest_len = min(experiment.dataset.values() , key = len)   #return dataframe with smallest length
         weighting_factors = {}
-        for dskey in experiment.dataset.keys():
-            weighting_factors[dskey] = len(df_smallest_len) / len(experiment.dataset[dskey])
+        for dskey, df in experiment.dataset.items():
+            weighting_factors[dskey] = {}
+            for colname in df:
+               x = ["Glucose [g/L]","RF [mg/L]","Acetat [g/L]","CDW_calc",("BASET_2","Value"),('pO2_2', 'Value'),"CO2"]
+               if colname in x:
+                    weighting_factors[dskey][colname] = (len(df_smallest_len) / len(experiment.dataset[dskey]))/experiment.dataset[dskey][colname].median()
+               
       
         return weighting_factors
 
@@ -309,8 +314,7 @@ class Bacillus_vf(Model):     #Dependent on base class
         :return: y0: Initial state vector as list.
         
         """
-        #viab_f = p["viab_f"].value
-
+       
         y0 = list(experiment.metadata.loc[["mX0","mS0","mP0", "V0"]].values)        #mX0 [g], mS0 [g], mP0 [mg], V0 [L]
         
     
@@ -396,11 +400,8 @@ class Bacillus_vf(Model):     #Dependent on base class
         #Substrate consummption for maintanance [g/h]
         rmainS = rX *1/Yxsmain
         
-        #SUbstrate consumption for growth [g/h]
+        #SUbstrate consumption [g/h]
         rS = (rX * 1/Yxs) + rmainS
-        
-        #Substrate consumption [g/h]
-        rS = rX * 1/Yxs
         
         #Product formation [mg/h]
         rP = rX * 1/Yxp
@@ -637,7 +638,7 @@ class Bacillus_vf(Model):     #Dependent on base class
                 t_grid = np.linspace(0, end, t_step) #timeline for simulation, going from 0 to end. Simulated values start always at zero in contrast to real measurement values
             
             if y0 is None:
-                y0 = self.create_y0(experiment, self.p)
+                y0 = self.create_y0(experiment)
             
             if p is None:
                 p = self.p
@@ -691,7 +692,7 @@ class Bacillus_vf(Model):     #Dependent on base class
 
         res_all = []
         viab_f = p["viab_f"].value
-        viab_f = p["viab_f"].value
+        
         for exp_id, dataset in datasets_dict.items():
             
             res_single = np.array([]) #empty array which will contain residuals
@@ -705,6 +706,21 @@ class Bacillus_vf(Model):     #Dependent on base class
                 wf = weighting_factors[dskey]       #single weighting factor       
                 t_grid = dat.index.values           #extract time from dataframe
                 sim_exp = self.simulate(None, t_grid, y0, p, c, yields, kwargs_solve_ivp = kwargs_solve_ivp)
+                
+                
+                for var in dat:     #loop over measured variables (columns)
+                    if var in sim_exp.columns:
+                        
+                        x = ["Glucose [g/L]","RF [mg/L]","Acetat [g/L]","CDW_calc",("BASET_2","Value"),('pO2_2', 'Value'),"CO2"]
+                        
+                        if var in x:
+                            res_var1 = (weighting_factors[dskey][var] * ((sim_exp[var] - dat[var]).values))
+                            res_single = np.append(res_single, res_var1)
+                            
+                        
+                            
+                        #res_single = np.append(res_single, res_var)
+            else:
 
                 if tau is not None:     
                     weighting_decay = np.exp( (dat.index-np.max(dat.index) ) / tau)  #calculating exponential weighting decay 
@@ -712,11 +728,12 @@ class Bacillus_vf(Model):     #Dependent on base class
                     weighting_decay = 1    #if no tau given: no additional weighting decay over time
 
                 for var in dat:     #loop over measured variables (columns)
-                    if var in sim_exp.columns:
-                        res_var = ((wf * (sim_exp[var] - dat[var]).values)/dat[var].values) * weighting_decay   # weighted residuals for this measured variable
+                    if var in sim_exp.columns:                       
+                        res_var = (wf * ((sim_exp[var] - dat[var]).values)) * weighting_decay        # weighted residuals for this measured variable
                         res_single = np.append(res_single, res_var) # append to long residual vector
-                    else:
-                        pass
+                else:
+                    pass
             res_all = np.append(res_all, res_single)        #super long vector with all residuals
+        
         
         return res_all
