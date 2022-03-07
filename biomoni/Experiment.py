@@ -54,7 +54,7 @@ class Experiment:
     , types = {"off" : "offline.csv", "on": "online.CSV", "CO2" : "CO2.dat"}
     , index_ts = {"off" : 0, "on": 1, "CO2" : 0}
 
-    , read_csv_settings = { "off" : dict(sep=";", encoding= 'unicode_escape', header = 0, skiprows= None, usecols = None)
+    , read_csv_settings = { "off" : dict(sep=";", encoding= 'unicode_escape', header = 0, skiprows= None, usecols = None, na_values="#DIV/0!")
     , "on": dict(sep=";",encoding= "unicode_escape",decimal=",", skiprows=[2,3] , skipfooter=1, usecols = None, engine="python", header= [0,1])
     , "CO2" : dict(sep=";", encoding= "unicode_escape", header = 0, skiprows=[0], usecols=[0,2,4], names =["ts","CO2", "p"])    }
 
@@ -128,7 +128,7 @@ class Experiment:
         for typ, p in file_path.items():
             if os.path.isfile(p):   #checking if the file in the experiment folder even exists              #Gefährlich try except
                 self.dataset[typ] = self.read_data(path = p, index_ts = index_ts[typ], read_csv_settings = read_csv_settings[typ], to_datetime_settings = to_datetime_settings[typ])
-                self.dataset[typ].replace('#DIV/0!', np.nan, inplace=True)
+                #self.dataset[typ].replace('#DIV/0!', np.nan, inplace=True)
             else:
                 warnings.warn("The file {0} could not be found within the Experiment folder: {1}".format(types[typ], dir))
 
