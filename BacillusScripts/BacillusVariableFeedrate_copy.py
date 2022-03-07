@@ -1,4 +1,5 @@
 import sys
+import xxlimited
 sys.path.append("V:/biomoni/")  
 from biomoni import Experiment
 from biomoni import Model
@@ -93,10 +94,10 @@ class Bacillus_vf(Model):     #Dependent on base class
            # p.add("Ki", value=0.1, min=0.01, max=1, vary=False)    #Inhibition constant, glucose inhibits uptake of ethanol [g/L]
 
            
-            p.add("Yxs", value=0.3, min=0.0001, max=10, vary=True)    #Yield biomass per glucose [g/g]
-            p.add("Yxp", value= 0.02, min= 0.0001, max= 10, vary= True)   #Yield RF per biomass [mg/g]
-            p.add("Yxsmain",value = 0.2, min= 0.00001, max=1, vary=True)
-            p.add("viab_f", value= 0.7, min = 0.0001, max=1, vary=True)
+            p.add("Yxs", value=0.25, min=0.001, max=20, vary=True)    #Yield biomass per glucose [g/g]
+            p.add("Yxp", value= 0.005, min= 0.0001, max= 1, vary= True)   #Yield RF per biomass [mg/g]
+            #p.add("Yxsmain",value = 0.2, min= 0.00001, max=1, vary=True)
+            p.add("viab_f", value= 0.0009, min = 0.00001, max=1, vary=True)
             
 
             #Biomass composition paramaters, content H,O,N from paper sonnleitner
@@ -106,7 +107,7 @@ class Bacillus_vf(Model):     #Dependent on base class
             p.add("NX", value=0.239, min=0.14, max=0.16, vary=False) #Stoichiometric nitrogen content of biomass [mol/mol]
             
             #Biomassgrowth
-            p.add("mu_max", value= 0.15, min= 0.001, max= 0.5, vary = True)               #EINHEIT?! g/h?
+            p.add("mu_max", value= 0.41, min= 0.1, max= 3, vary = True)               #EINHEIT?! g/h?
 
             self.p = p
             
@@ -142,8 +143,8 @@ class Bacillus_vf(Model):     #Dependent on base class
 
         #Required yields to solve linear equation system taken from p
         yields = {"Yxs": p["Yxs"].value, 
-                  "Yxp" : p["Yxp"].value, 
-                  "Yxsmain" : p["Yxsmain"].value}
+                  "Yxp" : p["Yxp"].value,} 
+                  #"Yxsmain" : p["Yxsmain"].value}
         
         MW_element_dict = {"C": 12.011, "H": 1.0079, "O": 15.999, "N": 14.007}        #molar masses of elements
         molecule = {"gluc": gluc, "O2": O2, "NH3" : NH3, "biomass": biomass, "CO2" : CO2, "H2O":  H2O} #molecules dict
@@ -242,10 +243,18 @@ class Bacillus_vf(Model):     #Dependent on base class
             weighting_factors[dskey] = {}
             for colname in df:
                x = ["Glucose [g/L]","RF [mg/L]","Acetat [g/L]","CDW_calc",("BASET_2","Value"),('pO2_2', 'Value'),"CO2"]
-               if colname in x:
-                    weighting_factors[dskey][colname] = (len(df_smallest_len) / len(experiment.dataset[dskey]))/experiment.dataset[dskey][colname].median()
                
-      
+               if colname in x:
+                   weighting_factors[dskey][colname] = (len(df_smallest_len) / len(experiment.dataset[dskey]))/experiment.dataset[dskey][colname].median()
+                   #if colname == "Glucose [g/L]":
+                       #weighting_factors[dskey][colname] = (len(df_smallest_len) / len(experiment.dataset[dskey])) 
+                   #if colname == "RF [mg/L]":
+                      # weighting_factors[dskey][colname] = (len(df_smallest_len) / len(experiment.dataset[dskey]))/1000
+                   #if colname == "CDW_calc":
+                       #weighting_factors[dskey][colname] = (len(df_smallest_len) / len(experiment.dataset[dskey]))
+                   
+               
+        print(weighting_factors)
         return weighting_factors
 
 
@@ -362,7 +371,7 @@ class Bacillus_vf(Model):     #Dependent on base class
         Yxs = p["Yxs"].value
         Km = p["Km"].value
         Yxp = p["Yxp"].value
-        Yxsmain = p["Yxsmain"].value
+        #Yxsmain = p["Yxsmain"].value
         
         
         
@@ -398,10 +407,10 @@ class Bacillus_vf(Model):     #Dependent on base class
         rX = mu * mX 
         
         #Substrate consummption for maintanance [g/h]
-        rmainS = rX *1/Yxsmain
+        #rmainS = rX *1/Yxsmain
         
         #SUbstrate consumption [g/h]
-        rS = (rX * 1/Yxs) + rmainS
+        rS = (rX * 1/Yxs) #+ rmainS
         
         #Product formation [mg/h]
         rP = rX * 1/Yxp
@@ -556,11 +565,12 @@ class Bacillus_vf(Model):     #Dependent on base class
         
         
         """
-        
-       
-        
+        y0_mod = deepcopy(y0) 
+        y0_mod[0] = y0_mod[0]* p["viab_f"].value  
+        print("viab_f is "+ str(p["viab_f"].value))
+        print("mX0 changed to "+ str(y0_mod[0]))
         #result of IVP solver
-        y_t = solve_ivp(self.model_rhs, [0, np.max(t_grid)], y0, t_eval=t_grid, args = (p, c, yields), **kwargs_solve_ivp).y.T
+        y_t = solve_ivp(self.model_rhs, [0, np.max(t_grid)], y0_mod, t_eval=t_grid, args = (p, c, yields), **kwargs_solve_ivp).y.T
     
 
         # unpack solution into vectors
@@ -638,7 +648,9 @@ class Bacillus_vf(Model):     #Dependent on base class
                 t_grid = np.linspace(0, end, t_step) #timeline for simulation, going from 0 to end. Simulated values start always at zero in contrast to real measurement values
             
             if y0 is None:
-                y0 = self.create_y0(experiment)
+                y0 = deepcopy(self.create_y0(experiment))
+               
+                
             
             if p is None:
                 p = self.p
@@ -648,7 +660,8 @@ class Bacillus_vf(Model):     #Dependent on base class
             
             if yields is None:
                 yields = self.chemical_balancing(p)
-                
+            
+              
             
         elif experiment is None:    #This if statement is to simulate with given t,y,p,c (used in the estimate process because it would require more computational power to calculate t, y and c within each estimate iteration)
             for i in [t_grid, p , y0, c, yields]:
@@ -698,9 +711,12 @@ class Bacillus_vf(Model):     #Dependent on base class
             res_single = np.array([]) #empty array which will contain residuals
             settings = settings_dict[exp_id]
             y0 = settings["y0"] #extract y0,c and weighting factors for each experiment
-            y0[0] = y0[0] * viab_f
+            
+            
+            
             c = settings["c"]
             weighting_factors = settings["wf"]
+            
 
             for dskey, dat in dataset.items():   #extract data for ("on", "off", "CO2") for each experiment
                 wf = weighting_factors[dskey]       #single weighting factor       
@@ -708,14 +724,17 @@ class Bacillus_vf(Model):     #Dependent on base class
                 sim_exp = self.simulate(None, t_grid, y0, p, c, yields, kwargs_solve_ivp = kwargs_solve_ivp)
                 
                 
+                
                 for var in dat:     #loop over measured variables (columns)
                     if var in sim_exp.columns:
                         
                         x = ["Glucose [g/L]","RF [mg/L]","Acetat [g/L]","CDW_calc",("BASET_2","Value"),('pO2_2', 'Value'),"CO2"]
-                        
+                       
                         if var in x:
-                            res_var1 = (weighting_factors[dskey][var] * ((sim_exp[var] - dat[var]).values))
-                            res_single = np.append(res_single, res_var1)
+                    
+                           print("difference in " + str(var) + " is processed.")
+                           res_var1 = (weighting_factors[dskey][var] * ((sim_exp[var] - dat[var]).values))
+                           res_single = np.append(res_single, res_var1)
                             
                         
                             
@@ -728,7 +747,8 @@ class Bacillus_vf(Model):     #Dependent on base class
                     weighting_decay = 1    #if no tau given: no additional weighting decay over time
 
                 for var in dat:     #loop over measured variables (columns)
-                    if var in sim_exp.columns:                       
+                    if var in sim_exp.columns:
+                        print("unexpected entering of cycle")                       
                         res_var = (wf * ((sim_exp[var] - dat[var]).values)) * weighting_decay        # weighted residuals for this measured variable
                         res_single = np.append(res_single, res_var) # append to long residual vector
                 else:
