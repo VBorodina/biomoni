@@ -9,17 +9,20 @@ from IPython.display import display
 
 path = r"V:/biomoni/BacillusData/Stamm185"
 
-experiment_dict_for_estimation = {exp : Experiment(path, exp,endpoint = "Sim_end") for exp in ["F1"]}  #all experiments in a dictionary   
-experiment_dict_for_graphs = {exp : Experiment(path, exp, endpoint = "Sim_end") for exp in ["F1"]} 
+experiment_dict_for_estimation = {exp : Experiment(path, exp,endpoint = "Sim_end") for exp in ["F5"]}  #all experiments in a dictionary   
+experiment_dict_for_graphs = {exp : Experiment(path, exp, endpoint = "F_end") for exp in ["F5"]} 
+
 
 
 #Exp = experiment_dict 
 b= Bacillus_vf()
 b.estimate(experiment_dict_for_estimation)
 b.report()
-
+print(b.p)
 t_grid = np.linspace(0,40,1001) 
 sim_dict_all = {experiment.exp_id: b.simulate(experiment = experiment, t_grid = t_grid) for experiment in experiment_dict_for_estimation.values()} 
+
+
 
 sim_list=list(sim_dict_all.values())
 experiment_list=list(experiment_dict_for_graphs.values())
