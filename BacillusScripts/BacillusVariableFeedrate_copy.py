@@ -590,12 +590,16 @@ class Bacillus_vf(Model):     #Dependent on base class
         else:
             Fout = 0
         #CO2_percent = np.array([self.calc_CO2(t = t_grid[i], y = y_t[i,:], p = p, c = c, yields = yields) for i in range(len(t_grid))])     #CO2 in vol.% from calc_CO2
+        
+        #calculating carbon recovery 
+        
+        Carb_R = 1
 
                 
         dict_sim_exp = {("t"): t_grid, ("V"): V, ("cX", "CDW_calc"):cX, 
                         ("BASET_rate","BASE"): 1, ("cS", "Glucose [g/L]"): cS,
                         ("cP","RF [mg/L]"): cP, ("Fout","F_out"): Fout,
-                        }                 #necessary to extend the dict if col names are different in offline/online datasets for different Fermentation runs, warning: give BASET_rate column also another alternative name even if BASET_rate has no other names. If you dont: you will get each letter as a seperate column and t will be overwritten!  
+                        ("Carb_R","CRY"): Carb_R}                 #necessary to extend the dict if col names are different in offline/online datasets for different Fermentation runs, warning: give BASET_rate column also another alternative name even if BASET_rate has no other names. If you dont: you will get each letter as a seperate column and t will be overwritten!  
         
         dict_sim_exp = {key: value for keys, value in dict_sim_exp.items() for key in keys}                             
         #simulated values
@@ -764,7 +768,7 @@ class Bacillus_vf(Model):     #Dependent on base class
         
         return res_all
     
-    def calc_CRR(self,experiment,c, y0):
+    def calc_CRR(self,experiment, V, y0):
         
         Mw_bm = 24.445          #g/mol molecular weight of biomass assuming composition of C=1,H=1.594,N=0.293,O=0.387,P=0.012,S=0.005
         Mw_gluc = 180.156       #g/mol molecular weight of glucose C=6,H=12,O=6
