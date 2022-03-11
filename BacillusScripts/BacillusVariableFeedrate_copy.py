@@ -89,15 +89,17 @@ class Bacillus_vf(Model):     #Dependent on base class
            # p.add("qO2max", value= 0.16473635, min=0.1, max=0.4, vary = True)    #Maximum oxygen uptake rate [g/(g*h)]  , min=0.1  0.1, 0.4  #previous start val: 0.255984, 1 #estimated value: 0.17451356
            # p.add("qm_max", value=0.01, min=0.0075, max=0.0125, vary = False)  #glucose uptake rate required for maintenance [g/(g*h)]  
             
-            p.add("Km", value=0.1, min=0.01, max=1,  vary=False)   #Saturation constant, concentration of glucose at µ = 0.5 µmax [g/L]
+            p.add("Km", value=0.1, min=0.01, max=0.5,  vary=False)   #Saturation constant, concentration of glucose at µ = 0.5 µmax [g/L]
            # p.add("Ke", value=0.1, min=0.01, max=1, vary=False)    #Saturation constant, concentration of ethanol at µ = 0.5 µmax [g/L]
            # p.add("Ki", value=0.1, min=0.01, max=1, vary=False)    #Inhibition constant, glucose inhibits uptake of ethanol [g/L]
 
            
-            p.add("Yxs", value=0.25, min=0.001, max=20, vary=True)    #Yield biomass per glucose [g/g]
-            p.add("Yxp", value= 0.005, min= 0.0001, max= 1, vary= True)   #Yield RF per biomass [mg/g]
+            p.add("Yxs", value=0.1, min=0.001, max=0.5, vary=True)    #Yield biomass per glucose [g/g]
+            p.add("Yxp", value= 0.01, min= 0.0001, max= 0.2, vary= True)   #Yield RF per biomass [mg/g]
             #p.add("Yxsmain",value = 0.2, min= 0.00001, max=1, vary=True)
-            p.add("viab_f", value= 0.0009, min = 0.00001, max=1, vary=True)
+            
+            #For single experiment fitting:
+            #p.add("viab_f", value= 0.0009, min = 0.00001, max=1, vary=True)
             
 
             #Biomass composition paramaters, content H,O,N from paper sonnleitner
@@ -107,7 +109,7 @@ class Bacillus_vf(Model):     #Dependent on base class
             p.add("NX", value=0.239, min=0.14, max=0.16, vary=False) #Stoichiometric nitrogen content of biomass [mol/mol]
             
             #Biomassgrowth
-            p.add("mu_max", value= 0.41, min= 0.1, max= 3, vary = True)               #EINHEIT?! g/h?
+            p.add("mu_max", value= 0.2, min= 0.1, max= 1, vary = True)               #EINHEIT?! g/h?
 
             self.p = p
             
@@ -388,10 +390,9 @@ class Bacillus_vf(Model):     #Dependent on base class
             Fout = np.nan_to_num(Fout)
         else:
             Fout = 0  
-        # masses and concentrations 
         
-        #self.settings_dict["y0"]["mX0"]= self.settings_dict["y0"]["mX0"].value * viab_f 
-               
+        
+        # masses and concentrations 
         mX, mS, mP, V = y
                    
         cX,cS,cP = [mX,mS,mP] / V 
@@ -566,9 +567,10 @@ class Bacillus_vf(Model):     #Dependent on base class
         
         """
         y0_mod = deepcopy(y0) 
-        y0_mod[0] = y0_mod[0]* p["viab_f"].value  
-        print("viab_f is "+ str(p["viab_f"].value))
+        #y0_mod[0] = y0_mod[0]* p["viab_f"].value  
+        #print("viab_f is "+ str(p["viab_f"].value))
         print("mX0 changed to "+ str(y0_mod[0]))
+        
         #result of IVP solver
         y_t = solve_ivp(self.model_rhs, [0, np.max(t_grid)], y0_mod, t_eval=t_grid, args = (p, c, yields), **kwargs_solve_ivp).y.T
     
@@ -580,7 +582,8 @@ class Bacillus_vf(Model):     #Dependent on base class
 
         #dmX_dt = np.array([self.model_rhs(t = t_grid[i], y = y_t[i,:], p = p, c = c, yields = yields) for i in range(len(t_grid))])[:,0]  #calc dmX_dt from model funcs
         #BASET_rate_wrong = dmX_dt * 1000  #base_rate in ml/h
-         
+        
+        #for later to visualize 
         if "Fout" in c:
             Fout = c["Fout"](t_grid)
             Fout = np.nan_to_num(Fout)
@@ -588,8 +591,11 @@ class Bacillus_vf(Model):     #Dependent on base class
             Fout = 0
         #CO2_percent = np.array([self.calc_CO2(t = t_grid[i], y = y_t[i,:], p = p, c = c, yields = yields) for i in range(len(t_grid))])     #CO2 in vol.% from calc_CO2
 
-        
-        dict_sim_exp = {("t"): t_grid, ("V"): V, ("cX", "CDW_calc"):cX, ("BASET_rate","BASE"): 1, ("cS", "Glucose [g/L]"): cS,("cP","RF [mg/L]"): cP, ("Fout","F_out"): Fout}                 #necessary to extend the dict if col names are different in offline/online datasets for different Fermentation runs, warning: give BASET_rate column also another alternative name even if BASET_rate has no other names. If you dont: you will get each letter as a seperate column and t will be overwritten!  
+                
+        dict_sim_exp = {("t"): t_grid, ("V"): V, ("cX", "CDW_calc"):cX, 
+                        ("BASET_rate","BASE"): 1, ("cS", "Glucose [g/L]"): cS,
+                        ("cP","RF [mg/L]"): cP, ("Fout","F_out"): Fout,
+                        }                 #necessary to extend the dict if col names are different in offline/online datasets for different Fermentation runs, warning: give BASET_rate column also another alternative name even if BASET_rate has no other names. If you dont: you will get each letter as a seperate column and t will be overwritten!  
         
         dict_sim_exp = {key: value for keys, value in dict_sim_exp.items() for key in keys}                             
         #simulated values
@@ -704,7 +710,7 @@ class Bacillus_vf(Model):     #Dependent on base class
         yields = self.chemical_balancing(p)  #yields are calculated within the parameterestimation, thus influencing the parameter choice    
 
         res_all = []
-        viab_f = p["viab_f"].value
+        
         
         for exp_id, dataset in datasets_dict.items():
             
@@ -757,3 +763,31 @@ class Bacillus_vf(Model):     #Dependent on base class
         
         
         return res_all
+    
+    def calc_CRR(self,experiment,c, y0):
+        
+        Mw_bm = 24.445          #g/mol molecular weight of biomass assuming composition of C=1,H=1.594,N=0.293,O=0.387,P=0.012,S=0.005
+        Mw_gluc = 180.156       #g/mol molecular weight of glucose C=6,H=12,O=6
+        Mw_RF = 376.36          #g/mol molecular weight of Riboflavin C=17,H=20,N=4,O=6
+        F_C_in = c["feedrate_glc"](t_grid)
+        
+        amountC_given = (y0[0]/Mw_bm)+(y0[1]/Mw_gluc *6)+(y0[2]/Mw_RF *17)
+        
+        t_grid = experiment.dataset["off"].index.values
+        
+        for t in t_grid:
+            Carb_RR=[]
+            nC_S = experiment.dataset["off"].loc[t,"Glucose [g/L]"]
+            nC_X = experiment.dataset["off"].loc[t,"Glucose [g/L]"]
+            amountC_found = nC_S + nC_X + nC_CO2_cum
+            Carb_RR = amountC_found / amountC_given
+            return Carb_RR
+            
+            
+        
+      
+        
+        
+        
+        Carb_RR = amountC_found / amountC_given
+        pass
