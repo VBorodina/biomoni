@@ -7,7 +7,7 @@ import plotly.graph_objs as go
 def visualizeBacillusFermentation(dict_for_graphs):
  """visualizeBacillusFermentation takes one dict as argument and creates a special overview of chosen fermentation parameters for bacillus experimental and simulated data.
  
- type dict_for_graphs: 
+ type dict_for_graphs: dictionary form of {"F1":{"simulated" ---DataFrame---,"off": ---DataFrame---,"on": ---DataFrame---,"CO2": ---DataFrame--- |etc.}}
  :return: Graph with plotted and named data
  """
  dfg = dict_for_graphs
@@ -27,7 +27,7 @@ def visualizeBacillusFermentation(dict_for_graphs):
                          )
      #figure top left: RF and RF production rat
      fig.add_trace(go.Scatter(x=dfg[exp]["off"].index, y= dfg[exp]["off"]["RF [mg/L]"], mode="markers", name = "Riboflavin", marker= dict(color= col_dict["RF"], size= 8, symbol="x"), legendgroup ="group1"), row=1, col=1)
-     fig.add_trace(go.Scatter(x=[dfg[exp]["off"].index], y= dfg[exp]["off"]["RF [mg/L]_rate"], mode="lines", name = "Riboflavin production rate", line= dict(color= col_dict["rP"], width= 1, dash= "solid"),legendgroup ="group1"),row=1, col=1, secondary_y=True)
+     #fig.add_trace(go.Scatter(x=[dfg[exp]["off"].index], y= dfg[exp]["off"]["RF [mg/L]_rate"], mode="lines", name = "Riboflavin production rate", line= dict(color= col_dict["rP"], width= 1, dash= "solid"),legendgroup ="group1"),row=1, col=1, secondary_y=True)
      fig.add_trace(go.Scatter(x=dfg[exp]["simulated"].index, y=dfg[exp]["simulated"]["cP"], mode="lines", name = "Riboflavin_simulated", line= dict(color= col_dict["RF"], width= 2, dash="dot"), legendgroup ="group3"), row=1, col=1)
      fig.update_yaxes(title_text="Riboflavin [mg/L]", row=1,col=1, secondary_y =False, titlefont=dict(size=15), color=col_dict["RF"],showline=True, linewidth=2, linecolor=col_dict["RF"],showgrid=True, gridwidth=1, gridcolor="rgb(240,240,240)",zeroline=False,range = [0,5500])
      fig.update_yaxes(title_text="RF production rate [mg/L/h]", row=1,col=1, secondary_y =True, titlefont=dict(size=15), color=col_dict["rP"],showline=True, linewidth=2, linecolor=col_dict["rP"],showgrid=False, gridwidth=1, gridcolor='LightPink',zeroline=False, range = [0,150])
@@ -47,9 +47,9 @@ def visualizeBacillusFermentation(dict_for_graphs):
         #fig 2nd row, left: CDW & mu 
      fig.add_trace(go.Scatter(x=dfg[exp]["off"].index, y=dfg[exp]["off"]["CDW_calc"], mode="markers", name = "CDW", marker= dict(color= col_dict["CDW"], size= 8, symbol="x"), legendgroup ="group3"), row=2, col=1)
      fig.add_trace(go.Scatter(x=dfg[exp]["simulated"].index, y=dfg[exp]["simulated"]["cX"], mode="lines", name = "CDW_simulated", line= dict(color= col_dict["CDW"], width= 2, dash="dot"), legendgroup ="group3"), row=2, col=1)
-     fig.add_trace(go.Scatter(x=[dfg[exp]["off"].index], y= dfg[exp]["off"]["CDW_calc_rate"], mode="lines", name = "Growthrate", line= dict(color= col_dict["mu"], width= 3, dash="solid"),legendgroup ="group3"),row=2, col=1, secondary_y=True)
+     fig.add_trace(go.Scatter(x=[dfg[exp]["CR1"].index], y= dfg[exp]["CR1"]["RR"], mode="markers", name = "Carbon recovery", marker= dict(color= col_dict["mu"], size= 8, symbol="x"),legendgroup ="group3"),row=2, col=1, secondary_y=True)
      fig.update_yaxes(title_text="CDW [g/L]", row=2,col=1, secondary_y =False, titlefont=dict(size=15), color=col_dict["CDW"],showline=True, linewidth=2, linecolor=col_dict["CDW"],showgrid=True, gridwidth=1, gridcolor="rgb(240,240,240)",zeroline=False,range = [0,30])
-     fig.update_yaxes(title_text="Growthrate [g/L/h]", row=2,col=1, secondary_y =True, titlefont=dict(size=15), color=col_dict["mu"],showline=True, linewidth=2, linecolor=col_dict["mu"],showgrid=False, gridwidth=1, gridcolor='LightPink',zeroline=False,range = [-2,2])
+     fig.update_yaxes(title_text="Carbon recovery [%]", row=2,col=1, secondary_y =True, titlefont=dict(size=15), color=col_dict["mu"],showline=True, linewidth=2, linecolor=col_dict["mu"],showgrid=False, gridwidth=1, gridcolor='LightPink',zeroline=False)
         
         #fig 2nd row, right: pO2 and pO2 consumption rate 
      fig.add_trace(go.Scatter(x=dfg[exp]["on"].index, y= dfg[exp]["on"][("pO2_2","Value")], mode="markers", name = "first", marker= dict(color= col_dict[("pO2_2","Value")], size= 3, symbol="0"), legendgroup ="group4"), row=2, col=2)

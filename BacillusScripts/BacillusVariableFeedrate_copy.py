@@ -5,6 +5,7 @@ from biomoni import Experiment
 from biomoni import Model
 import pandas as pd
 import numpy as np
+import scipy
 
 
 from scipy.integrate import solve_ivp
@@ -417,7 +418,7 @@ class Bacillus_vf(Model):     #Dependent on base class
         rP = rX * 1/Yxp
         
         
-        return Fin, Fout, rS, rP, rX, rP,V 
+        return Fin, Fout, mu, rS, rP, rX, rP,V 
 
 
     def model_rhs(self, t, y, p, c, yields):
@@ -459,7 +460,7 @@ class Bacillus_vf(Model):     #Dependent on base class
         csf = c["csf"] # substrate concentration in feed [g/L]  
         
 
-        Fin, Fout, rS, rP, rX, rP, V = self.kinetics(t, y, p, c, yields)   
+        Fin, Fout, mu, rS, rP, rX, rP, V = self.kinetics(t, y, p, c, yields)   
     
           
         dmX_dt = rX 
@@ -593,13 +594,13 @@ class Bacillus_vf(Model):     #Dependent on base class
         
         #calculating carbon recovery 
         
-        Carb_R = 1
+        #CRR = self.calc_CRR()
+        
 
                 
         dict_sim_exp = {("t"): t_grid, ("V"): V, ("cX", "CDW_calc"):cX, 
                         ("BASET_rate","BASE"): 1, ("cS", "Glucose [g/L]"): cS,
-                        ("cP","RF [mg/L]"): cP, ("Fout","F_out"): Fout,
-                        ("Carb_R","CRY"): Carb_R}                 #necessary to extend the dict if col names are different in offline/online datasets for different Fermentation runs, warning: give BASET_rate column also another alternative name even if BASET_rate has no other names. If you dont: you will get each letter as a seperate column and t will be overwritten!  
+                        ("cP","RF [mg/L]"): cP, ("Fout","F_out"): Fout}                 #necessary to extend the dict if col names are different in offline/online datasets for different Fermentation runs, warning: give BASET_rate column also another alternative name even if BASET_rate has no other names. If you dont: you will get each letter as a seperate column and t will be overwritten!  
         
         dict_sim_exp = {key: value for keys, value in dict_sim_exp.items() for key in keys}                             
         #simulated values
@@ -735,6 +736,7 @@ class Bacillus_vf(Model):     #Dependent on base class
                 
                 
                 
+                
                 for var in dat:     #loop over measured variables (columns)
                     if var in sim_exp.columns:
                         
@@ -768,30 +770,105 @@ class Bacillus_vf(Model):     #Dependent on base class
         
         return res_all
     
-    def calc_CRR(self,experiment, V, y0):
+    def calc_CRR(self,experiment, V, c , y0):
         
-        Mw_bm = 24.445          #g/mol molecular weight of biomass assuming composition of C=1,H=1.594,N=0.293,O=0.387,P=0.012,S=0.005
+        Mw_bm = 24.445          #g/mol molecular weight of biomass assuming composition of C=1,H=1.594,N=0.293,O=0.387,P=0.01,S=0005
         Mw_gluc = 180.156       #g/mol molecular weight of glucose C=6,H=12,O=6
         Mw_RF = 376.36          #g/mol molecular weight of Riboflavin C=17,H=20,N=4,O=6
+        Mw_CO2 = 44.01
+        R = 0.08314             #bar*l/mol*K
+        T = c["T"] + 273.15     #Kelvin
+        dV_gas_dt = c["gas_flow"]
+        pressure = c["pressure"] #bar
+        
+        t_grid = list(experiment.dataset["off"].index.values)
+        
         F_C_in = c["feedrate_glc"](t_grid)
         
-        amountC_given = (y0[0]/Mw_bm)+(y0[1]/Mw_gluc *6)+(y0[2]/Mw_RF *17)
+        #initiate df where all relevant values for calculation will be stored
+        df = pd.DataFrame(data=F_C_in,index=t_grid, columns=["feedrate pure glucose g/h"])
         
-        t_grid = experiment.dataset["off"].index.values
-        
+        # calculate cumulated amount of Glucose from Feed
+        F_C_in_cum = []
+
         for t in t_grid:
-            Carb_RR=[]
-            nC_S = experiment.dataset["off"].loc[t,"Glucose [g/L]"]
-            nC_X = experiment.dataset["off"].loc[t,"Glucose [g/L]"]
-            amountC_found = nC_S + nC_X + nC_CO2_cum
-            Carb_RR = amountC_found / amountC_given
-            return Carb_RR
+            func = c["feedrate_glc"]
+            cummulation = scipy.integrate.quad(func,0,t,limit=200)
+            
+            F_C_in_cum.append(cummulation)
+
+        df["Glc g_cum"] = [x[0] for x in F_C_in_cum]
+        
+        
+        #creating column with calculcated Volume values for CO2 [L] from exhaust gas measurment
+        if "CO2" in experiment.dataset.keys():
+            experiment.dataset["CO2"]["V_CO2 L"] = (experiment.dataset["CO2"]["CO2"]- 0.04)/100 * dV_gas_dt   #30 L/h is F_exhaust or Outlet flow (assuming dV_gas_dt = inlet flow)
+
+            CO2_func = interp1d(x = experiment.dataset["CO2"].index, 
+                                y = experiment.dataset["CO2"]["CO2"], fill_value = (experiment.dataset["CO2"]["CO2"].iloc[0], experiment.dataset["CO2"]["CO2"].iloc[-1]) , 
+                                bounds_error= False)
+
+            V_CO2_func = interp1d(x = experiment.dataset["CO2"].index, 
+                                y = experiment.dataset["CO2"]["V_CO2 L"], fill_value = (experiment.dataset["CO2"]["V_CO2 L"].iloc[0], experiment.dataset["CO2"]["V_CO2 L"].iloc[-1]) ,
+                                bounds_error= False)
+
+            df["CO2 %"] = CO2_func(t_grid)
+            df["V_CO2 L"] = V_CO2_func(t_grid)
+            
+            #calculate cumulated amount of CO2 in exhaust gas 
+            CO2_out_cum = []
+
+            for t in t_grid:
+                func = V_CO2_func     
+                cummulation = scipy.integrate.quad(func,0,t,limit=200)
+                
+                CO2_out_cum.append(cummulation)
+                
+            df["CO2 L_cum"] = [x[0] for x in CO2_out_cum]
+
+            df["CO2 mol_cum"] = (df["CO2 L_cum"] * pressure) / (R * T)
             
             
-        
-      
-        
-        
-        
-        Carb_RR = amountC_found / amountC_given
-        pass
+            
+            #calculation of recovery rate
+
+            Carb_RR= {}
+            Carb_RR["t"]= t_grid
+            Carb_RR["given"]=[]
+            Carb_RR["found"]=[]
+            Carb_RR["RR"]=[]
+
+            for t in t_grid:
+                
+                #mass balance of Carbon given (Substrate,Biomass,Product)
+                nC_Sg = y0[1]/Mw_gluc *6 + df["Glc g_cum"].values[t_grid.index(t)]/Mw_gluc * 6   #initial Substrate + Substrate from Feed
+                nC_Xg = y0[0]/Mw_bm
+                nC_Pg = y0[2]/Mw_RF *17
+                
+                amountC_given = nC_Sg + nC_Xg + nC_Pg 
+                
+                Volume = V(t)
+                
+                #mass balance of Carbon found (Substrate,Biomass,Product,CO2)
+                nC_Sf = (float(experiment.dataset["off"]["Glucose [g/L]"].loc[[t]])*Volume)/Mw_gluc * 6
+                nC_Xf = (float(experiment.dataset["off"]["CDW_calc"].loc[[t]])*Volume)/ Mw_bm
+                nC_Pf = (float(experiment.dataset["off"]["RF [mg/L]"].loc[[t]])*Volume /1000)/ Mw_RF * 17
+                nC_CO2 = float(df["CO2 mol_cum"].values[t_grid.index(t)])/Mw_CO2
+
+                amountC_found = nC_Sf + nC_Xf + nC_Pf + nC_CO2
+                
+                RR = (amountC_found / amountC_given) * 100
+                
+                Carb_RR["given"].append(amountC_given)
+                Carb_RR["found"].append(amountC_found)
+            
+                Carb_RR["RR"].append(RR)
+            
+            df2 = pd.DataFrame.from_dict(Carb_RR)
+            
+
+            df["RR"] = df2["RR"].values 
+        else:
+          df["RR"] = 0      
+
+        return df, df2

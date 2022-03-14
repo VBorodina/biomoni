@@ -5,6 +5,7 @@ from BacillusScripts.BacillusVariableFeedrate_copy import Bacillus_vf
 from BacillusScripts.visualizationBacillus import visualizeBacillusFermentation
 import pandas as pd
 import numpy as np
+from scipy.interpolate import interp1d
 from IPython.display import display
 
 path = r"V:/biomoni/BacillusData/Stamm185"
@@ -41,12 +42,33 @@ for key in experiment_dict_for_graphs.keys():
  
 sim_complete = {list(sim)[i]: {"simulated":sim_list[i]}for i in range(len(sim_list))}
    
+#calculate Carbon recovery 
+CRR_all ={}
+
+for key in experiment_dict_for_graphs.keys():
+    CRR_all[key]= {}
+
+for key, dat in sim_dict_all.items():
+    V_func= interp1d(x=sim_dict_all[key]["V"].index, y=sim_dict_all[key]["V"], fill_value = (sim_dict_all[key]["V"].iloc[0], sim_dict_all[key]["V"].iloc[-1]) , bounds_error= False)
+    exp =Experiment(path, key, endpoint="F_end")
+    c = b.create_controls(exp)
+    y0 = b.create_y0(exp)
+    #datasaet = exp.dataset
+    
+    CRR1, CRR2 = b.calc_CRR(experiment=exp,c=c,V=V_func,y0=y0)
+    
+    CRR_all[key]= {"CR1": CRR1,"CR2": CRR2}
+
+
+   
 # bring both dictionaries together in form of {"F1":{"simulated" ---DataFrame---,"off": ---DataFrame---,"on": ---DataFrame---,"CO2": ---DataFrame--- |etc.}}
 
 dict_for_graphs = {}
 dict_for_graphs = sim_complete
 dfg = dict_for_graphs  
-for d in dict_for_graphs.keys():
-    dict_for_graphs[d].update(ex[d])         
+for id in dict_for_graphs.keys():
+    dict_for_graphs[id].update(ex[id])
+    dict_for_graphs[id].update(CRR_all[id])         
+  
 
 visualizeBacillusFermentation(dfg)
