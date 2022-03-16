@@ -776,6 +776,7 @@ class Bacillus_vf(Model):     #Dependent on base class
         Mw_gluc = 180.156       #g/mol molecular weight of glucose C=6,H=12,O=6
         Mw_RF = 376.36          #g/mol molecular weight of Riboflavin C=17,H=20,N=4,O=6
         Mw_CO2 = 44.01
+        Mw_Ac = 59.04
         R = 0.08314             #bar*l/mol*K
         T = c["T"] + 273.15     #Kelvin
         dV_gas_dt = c["gas_flow"]
@@ -849,13 +850,14 @@ class Bacillus_vf(Model):     #Dependent on base class
                 
                 Volume = V(t)
                 
-                #mass balance of Carbon found (Substrate,Biomass,Product,CO2)
+                #mass balance of Carbon found (Substrate,Biomass,Riboflavin,Acetate,CO2)
                 nC_Sf = (float(experiment.dataset["off"]["Glucose [g/L]"].loc[[t]])*Volume)/Mw_gluc * 6
                 nC_Xf = (float(experiment.dataset["off"]["CDW_calc"].loc[[t]])*Volume)/ Mw_bm
-                nC_Pf = (float(experiment.dataset["off"]["RF [mg/L]"].loc[[t]])*Volume /1000)/ Mw_RF * 17
+                nC_RFf = (float(experiment.dataset["off"]["RF [mg/L]"].loc[[t]])*Volume /1000)/ Mw_RF * 17
+                nC_Acf = (float(experiment.dataset["off"]["Acetate [g/L]"].loc[[t]])*Volume)/ Mw_Ac
                 nC_CO2 = float(df["CO2 mol_cum"].values[t_grid.index(t)])/Mw_CO2
 
-                amountC_found = nC_Sf + nC_Xf + nC_Pf + nC_CO2
+                amountC_found = nC_Sf + nC_Xf + nC_RFf + nC_Acf + nC_CO2
                 
                 RR = (amountC_found / amountC_given) * 100
                 
