@@ -837,14 +837,22 @@ class Bacillus_vf(Model):     #Dependent on base class
             Carb_RR["t"]= t_grid
             Carb_RR["given"]=[]
             Carb_RR["found"]=[]
+            
+            Carb_RR["mol glc"]=[]
+            Carb_RR["mol bm"]=[]
+            Carb_RR["mol RF"]=[]
+            Carb_RR["mol Ac"]=[]
+            Carb_RR["mol CO2"]=[]
+            
             Carb_RR["RR"]=[]
 
             for t in t_grid:
                 
                 #mass balance of Carbon given (Substrate,Biomass,Product)
+                
                 nC_Sg = y0[1]/Mw_gluc *6 + df["Glc g_cum"].values[t_grid.index(t)]/Mw_gluc * 6   #initial Substrate + Substrate from Feed
-                nC_Xg = y0[0]/Mw_bm
-                nC_Pg = y0[2]/Mw_RF *17
+                nC_Xg = float(experiment.metadata.loc[["mX0_ohne_viab_f"]].values)/Mw_bm
+                nC_Pg = (y0[2]/1000)/Mw_RF *17
                 
                 amountC_given = nC_Sg + nC_Xg + nC_Pg 
                 
@@ -855,7 +863,7 @@ class Bacillus_vf(Model):     #Dependent on base class
                 nC_Xf = (float(experiment.dataset["off"]["CDW_calc"].loc[[t]])*Volume)/ Mw_bm
                 nC_RFf = (float(experiment.dataset["off"]["RF [mg/L]"].loc[[t]])*Volume /1000)/ Mw_RF * 17
                 nC_Acf = (float(experiment.dataset["off"]["Acetate [g/L]"].loc[[t]])*Volume)/ Mw_Ac
-                nC_CO2 = float(df["CO2 mol_cum"].values[t_grid.index(t)])/Mw_CO2
+                nC_CO2 = float(df["CO2 mol_cum"].values[t_grid.index(t)])
 
                 amountC_found = nC_Sf + nC_Xf + nC_RFf + nC_Acf + nC_CO2
                 
@@ -863,6 +871,12 @@ class Bacillus_vf(Model):     #Dependent on base class
                 
                 Carb_RR["given"].append(amountC_given)
                 Carb_RR["found"].append(amountC_found)
+                
+                Carb_RR["mol glc"].append(nC_Sf)
+                Carb_RR["mol bm"].append(nC_Xf)
+                Carb_RR["mol RF"].append(nC_RFf)
+                Carb_RR["mol Ac"].append(nC_Acf)
+                Carb_RR["mol CO2"].append(nC_CO2)
             
                 Carb_RR["RR"].append(RR)
             
@@ -871,6 +885,8 @@ class Bacillus_vf(Model):     #Dependent on base class
 
             df["RR"] = df2["RR"].values 
         else:
-          df["RR"] = 0      
+          df["RR"] = 0
+          Carb_RR= {}
+          df2 = pd.DataFrame.from_dict(Carb_RR)      
 
         return df, df2
