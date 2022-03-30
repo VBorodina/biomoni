@@ -96,7 +96,7 @@ class Bacillus_vf(Model):     #Dependent on base class
 
            
             p.add("Yxs", value=0.1, min=0.001, max=0.5, vary=True)    #Yield biomass per glucose [g/g]
-            p.add("Yxp", value= 0.01, min= 0.0001, max= 0.2, vary= True)   #Yield RF per biomass [mg/g]
+            p.add("Ypx", value= 100, min= 1, max= 250, vary= True)   #Yield RF per biomass [mg/g]
             #p.add("Yxsmain",value = 0.2, min= 0.00001, max=1, vary=True)
             
             #For single experiment fitting:
@@ -122,74 +122,7 @@ class Bacillus_vf(Model):     #Dependent on base class
         self.yields = self.chemical_balancing(self.p)
         
        
-    def chemical_balancing(self,p):
-        """Calculate yield coefficients from p for the following metabolic pathways:
-
-        1. (ox) : Oxidative glucose consumption
-        5. (m) : Maintenence metabolism
-
-        :param p: Parameters 
-        :type p: lmfit.parameter.Parameters object
-
-        :return: yields: Yields coefficients of metabolic pathways
-        """
-        
-        #Order:         C,      H,      O,      N numbers of atoms in the molecule e.g. glucose : C6H12O6N0
-        gluc = np.array([6.0,   12.0,   6.0,    0.0])
-        O2 = np.array([0.0,     0.0,     2.0,   0.0])
-        NH3 = np.array([0.0,    3.0,    0.0,    1.0])
-        biomass = np.array([1.0,p["HX"].value, p["OX"].value, p["NX"].value])
-        CO2 = np.array([1.0,    0.0,    2.0,    0.0])
-        H2O = np.array([0.0,    2.0,    1.0,    0.0])
-       
-
-
-        #Required yields to solve linear equation system taken from p
-        yields = {"Yxs": p["Yxs"].value, 
-                  "Yxp" : p["Yxp"].value,} 
-                  #"Yxsmain" : p["Yxsmain"].value}
-        
-        MW_element_dict = {"C": 12.011, "H": 1.0079, "O": 15.999, "N": 14.007}        #molar masses of elements
-        molecule = {"gluc": gluc, "O2": O2, "NH3" : NH3, "biomass": biomass, "CO2" : CO2, "H2O":  H2O} #molecules dict
-        
-        MW = {}           #MW = molar weights: dict with masses of molecules
-        for key, mol in molecule.items():
-            molecule_MW_array = ([])
-            for vectorvalue, weight in zip (mol, MW_element_dict.values()):
-                vw = vectorvalue*weight
-                molecule_MW_array= np.append(molecule_MW_array, vw)
-            MW[key] = sum(molecule_MW_array)
-            
-        NX1 = p["NX"].value #NX1 because NX is reserved for the symbol letter NX from sympy to solve the equation
-       
-        #1. oxidative glucose consumption: gluc+ a*O2 + b*NX*NH3 = b*biomass + c*CO2 + d*H2O 
-        a,b,c,d, NX = symbols("a b c d NX")         #set symbols to solve equation
-        Yxs_ox = p["Yxs"].value
-        b1 = Yxs_ox* MW["gluc"]/MW["biomass"]     #calculate stoichiometric coefficient from mass related yield coefficient
-
-        eqOx_list = []
-        for num in range(3):        #Set up reaction equations three times because three unknowns are present
-            eqOx = Eq(gluc[num]+ a*O2[num]+ b*NX*NH3[num], b*biomass[num]+ c*CO2[num]+ d*H2O[num])
-            eqOx = eqOx.subs({b: b1, NX: NX1})
-            eqOx_list.append(eqOx)
-        
-        solution_Ox = sp.solve(eqOx_list, (a, c, d), dict= True)        #solve equation system
-        a1, c1, d1 = np.float(solution_Ox[0][a]), np.float(solution_Ox[0][c]), np.float(solution_Ox[0][d])  #assign results to variables
-
-        YCO2x_ox = c1/b1 * MW["CO2"]/MW["biomass"]
-        YCO2s_ox = c1/1 * MW["CO2"]/MW["gluc"]
-        YO2s_ox = a1/1 * MW["O2"]/MW["gluc"]
-        
-        yields["YCO2x_ox"], yields["YCO2s_ox"], yields["YO2s_ox"] = YCO2x_ox, YCO2s_ox, YO2s_ox 
-        
-        #5. maintenance metabolism : gluc + 6*O2 = 6*CO2 + 6*H2O
-
-        YCO2s_m = 6 * MW["CO2"]/MW["gluc"]
-  
-
-        yields["YCO2s_m"] = YCO2s_m
-        
-        return yields
+   
 
 
     def create_settings(self, experiment):
@@ -332,7 +265,7 @@ class Bacillus_vf(Model):     #Dependent on base class
     
         return y0
 
-    def kinetics(self, t, y, p, c, yields):
+    def kinetics(self, t, y, p, c):
 
         """ r.h.s. (right hand side) function of the ODE model.
 
@@ -373,7 +306,7 @@ class Bacillus_vf(Model):     #Dependent on base class
         mu_max = p["mu_max"].value
         Yxs = p["Yxs"].value
         Km = p["Km"].value
-        Yxp = p["Yxp"].value
+        Ypx = p["Ypx"].value
         #Yxsmain = p["Yxsmain"].value
         
         
@@ -406,7 +339,7 @@ class Bacillus_vf(Model):     #Dependent on base class
         mu = mu_max * mu_Mo 
         
         #Biomass growth [g/h]
-        rX = mu * mX 
+        rX = mu * cX * V 
         
         #Substrate consummption for maintanance [g/h]
         #rmainS = rX *1/Yxsmain
@@ -415,13 +348,13 @@ class Bacillus_vf(Model):     #Dependent on base class
         rS = (rX * 1/Yxs) #+ rmainS
         
         #Product formation [mg/h]
-        rP = rX * 1/Yxp
+        rP = rX * Ypx
         
         
         return Fin, Fout, mu, rS, rP, rX, rP,V 
 
 
-    def model_rhs(self, t, y, p, c, yields):
+    def model_rhs(self, t, y, p, c):
         """ This function calculates the time derivatives to be integrated by solve_ivp by processing the outcome of the kinetics function.
 
         :param t: Current time [h]
@@ -460,7 +393,7 @@ class Bacillus_vf(Model):     #Dependent on base class
         csf = c["csf"] # substrate concentration in feed [g/L]  
         
 
-        Fin, Fout, mu, rS, rP, rX, rP, V = self.kinetics(t, y, p, c, yields)   
+        Fin, Fout, mu, rS, rP, rX, rP, V = self.kinetics(t, y, p, c)   
     
           
         dmX_dt = rX 
@@ -470,7 +403,7 @@ class Bacillus_vf(Model):     #Dependent on base class
         
         return dmX_dt, dmS_dt, dmP_dt, dV_dt
 
-    def calc_CO2(self, t, y, p, c, yields):
+    def calc_CO2(self, t, y, p, c):
         """ This function calculates the CO2 pressure in the reactor in vol. % by processing the outcome of the kinetics function.
         
         :param t: Current time [h]
@@ -514,7 +447,7 @@ class Bacillus_vf(Model):     #Dependent on base class
         pressure = c["pressure"] #bar
         M_CO2 = 44.01     #g/mol
 
-        cX, V, Fin, mu = self.kinetics(t, y, p, c, yields)
+        cX, V, Fin, mu = self.kinetics(t, y, p, c)
         
         qCO2 = 1                                        # qCO2 sollte in kinetics() berechnet werden, 1 ist nur als lückenfüller da 
 
@@ -527,7 +460,7 @@ class Bacillus_vf(Model):     #Dependent on base class
         return CO2_percent
 
     
-    def observation(self, t_grid, y0, p, c, yields, **kwargs_solve_ivp):
+    def observation(self, t_grid, y0, p, c, **kwargs_solve_ivp):
         """ The observation function calculates simulated values by processing the outcome of the functions model_rhs and calc_CO2.
 
         :param t_grid: time grid with measurement time points [h]
@@ -568,12 +501,15 @@ class Bacillus_vf(Model):     #Dependent on base class
         
         """
         y0_mod = deepcopy(y0) 
+        
+        # for viability factor 
+        
         #y0_mod[0] = y0_mod[0]* p["viab_f"].value  
         #print("viab_f is "+ str(p["viab_f"].value))
-        print("mX0 changed to "+ str(y0_mod[0]))
+        #print("mX0 changed to "+ str(y0_mod[0]))
         
         #result of IVP solver
-        y_t = solve_ivp(self.model_rhs, [0, np.max(t_grid)], y0_mod, t_eval=t_grid, args = (p, c, yields), **kwargs_solve_ivp).y.T
+        y_t = solve_ivp(self.model_rhs, [0, np.max(t_grid)], y0_mod, t_eval=t_grid, args = (p, c), **kwargs_solve_ivp).y.T
     
 
         # unpack solution into vectors
@@ -612,8 +548,7 @@ class Bacillus_vf(Model):     #Dependent on base class
         
 
     
-    def simulate(self, experiment = None, t_grid = None, y0 = None, p = None,  c = None, yields = None
-    , kwargs_solve_ivp = dict(method= "Radau", first_step = 0.0000001, max_step= 0.1)       # kwargs_solve_ivp may have to be adapted
+    def simulate(self, experiment = None, t_grid = None, y0 = None, p = None,  c = None, kwargs_solve_ivp = dict(method= "Radau", first_step = 0.0000001, max_step= 0.1)       # kwargs_solve_ivp may have to be adapted
     , t_step = 0.001, endpoint = None, **kwargs_solve_ivp_given):  
 
         """
@@ -669,13 +604,13 @@ class Bacillus_vf(Model):     #Dependent on base class
             if c is None:
                 c = self.create_controls(experiment)
             
-            if yields is None:
-                yields = self.chemical_balancing(p)
+            # if yields is None:
+            #     yields = self.chemical_balancing(p)
             
               
             
         elif experiment is None:    #This if statement is to simulate with given t,y,p,c (used in the estimate process because it would require more computational power to calculate t, y and c within each estimate iteration)
-            for i in [t_grid, p , y0, c, yields]:
+            for i in [t_grid, p , y0, c]:
                 if i is None:
                     raise ValueError("If no Experiment is given, it is necessary to give t_grid, p , y0, c and yields in order to simulate")
 
@@ -684,10 +619,10 @@ class Bacillus_vf(Model):     #Dependent on base class
         assert isinstance(y0, (np.ndarray, list)), "y0 must be either of type np.ndarray or list"
         assert isinstance(p, type(Parameters())), "Given parameters must be of type lmfit.parameter.Parameters"
         assert isinstance(c, dict), "c must be a dictionary"
-        assert isinstance(yields, dict), "yields must be a dictionary"
+        #assert isinstance(yields, dict), "yields must be a dictionary"
 
 
-        sim_exp = self.observation(t_grid, y0, p, c, yields, **kwargs_solve_ivp)
+        sim_exp = self.observation(t_grid, y0, p, c, **kwargs_solve_ivp)
 
         return sim_exp
    
@@ -712,7 +647,7 @@ class Bacillus_vf(Model):     #Dependent on base class
         _return: res_all: Super long residual vector containing the residuals of all experiments.
         """
 
-        yields = self.chemical_balancing(p)  #yields are calculated within the parameterestimation, thus influencing the parameter choice    
+        # yields = self.chemical_balancing(p)  #yields are calculated within the parameterestimation, thus influencing the parameter choice    
 
         res_all = []
         
@@ -732,7 +667,7 @@ class Bacillus_vf(Model):     #Dependent on base class
             for dskey, dat in dataset.items():   #extract data for ("on", "off", "CO2") for each experiment
                 wf = weighting_factors[dskey]       #single weighting factor       
                 t_grid = dat.index.values           #extract time from dataframe
-                sim_exp = self.simulate(None, t_grid, y0, p, c, yields, kwargs_solve_ivp = kwargs_solve_ivp)
+                sim_exp = self.simulate(None, t_grid, y0, p, c, kwargs_solve_ivp = kwargs_solve_ivp)
                 
                 
                 
@@ -744,7 +679,7 @@ class Bacillus_vf(Model):     #Dependent on base class
                        
                         if var in x:
                     
-                           print("difference in " + str(var) + " is processed.")
+                           #print("difference in " + str(var) + " is processed.")
                            res_var1 = (weighting_factors[dskey][var] * ((sim_exp[var] - dat[var]).values))
                            res_single = np.append(res_single, res_var1)
                             
@@ -801,9 +736,13 @@ class Bacillus_vf(Model):     #Dependent on base class
         df["Glc g_cum"] = [x[0] for x in F_C_in_cum]
         
         
-        #creating column with calculcated Volume values for CO2 [L] from exhaust gas measurment
+        
         if "CO2" in experiment.dataset.keys():
+            #creating column with calculcated Volume values for CO2 [L] from exhaust gas measurment
             experiment.dataset["CO2"]["V_CO2 L"] = (experiment.dataset["CO2"]["CO2"]- 0.04)/100 * dV_gas_dt   #30 L/h is F_exhaust or Outlet flow (assuming dV_gas_dt = inlet flow)
+
+            ##creating column with cumulated volume values for CO2 [L] 
+            experiment.dataset["CO2"]["cum_CO2 L"] = scipy.integrate.cumtrapz(experiment.dataset["CO2"]["V_CO2 L"],experiment.dataset["CO2"]["V_CO2 L"].index, initial=0)
 
             CO2_func = interp1d(x = experiment.dataset["CO2"].index, 
                                 y = experiment.dataset["CO2"]["CO2"], fill_value = (experiment.dataset["CO2"]["CO2"].iloc[0], experiment.dataset["CO2"]["CO2"].iloc[-1]) , 
@@ -812,22 +751,17 @@ class Bacillus_vf(Model):     #Dependent on base class
             V_CO2_func = interp1d(x = experiment.dataset["CO2"].index, 
                                 y = experiment.dataset["CO2"]["V_CO2 L"], fill_value = (experiment.dataset["CO2"]["V_CO2 L"].iloc[0], experiment.dataset["CO2"]["V_CO2 L"].iloc[-1]) ,
                                 bounds_error= False)
+            
+            V_CO2_cum_func= interp1d(x = experiment.dataset["CO2"].index, 
+                    y = experiment.dataset["CO2"]["cum_CO2 L"], fill_value = (experiment.dataset["CO2"]["cum_CO2 L"].iloc[0], experiment.dataset["CO2"]["cum_CO2 L"].iloc[-1]) ,
+                    bounds_error= False)
 
             df["CO2 %"] = CO2_func(t_grid)
             df["V_CO2 L"] = V_CO2_func(t_grid)
+            df["cum_CO2 L"] = V_CO2_cum_func(t_grid)
             
             #calculate cumulated amount of CO2 in exhaust gas 
-            CO2_out_cum = []
-
-            for t in t_grid:
-                func = V_CO2_func     
-                cummulation = scipy.integrate.quad(func,0,t,limit=200)
-                
-                CO2_out_cum.append(cummulation)
-                
-            df["CO2 L_cum"] = [x[0] for x in CO2_out_cum]
-
-            df["CO2 mol_cum"] = (df["CO2 L_cum"] * pressure) / (R * T)
+            df["CO2 mol_cum"] = (df["cum_CO2 L"] * pressure) / (R * T)
             
             
             

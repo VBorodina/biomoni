@@ -138,8 +138,8 @@ class Model:
         self.duration = end - start         
         self.result = result
         self.p = result.params
-        self.yields = self.chemical_balancing(self.p)   #this may be not generic since the function chemical balancing may not be given in every submodel
-        self.data_and_residuals = self.get_residuals(self.p, self.yields, datasets_dict, settings_dict, kwargs_solve_ivp)   #same prob with self.yields. there may be models which dont even need extra calculated yields in order to simulate 
+        #self.yields = self.chemical_balancing(self.p)   #this may be not generic since the function chemical balancing may not be given in every submodel
+        self.data_and_residuals = self.get_residuals(self.p, datasets_dict, settings_dict, kwargs_solve_ivp)   #same prob with self.yields. there may be models which dont even need extra calculated yields in order to simulate 
         self.stat_single, self.stat_all = self.statistics(self.data_and_residuals)
 
 
@@ -190,7 +190,7 @@ class Model:
 
 
 
-    def get_residuals(self, p, yields, datasets_dict, settings_dict, kwargs_solve_ivp):
+    def get_residuals(self, p, datasets_dict, settings_dict, kwargs_solve_ivp):
         """ Function that simulates on the measured data time points with given p and yields and calculates the residuals, The experimental data in datasets_dcit and settings must match.
 
         :param p: Structure with parameter values to be estimated, cf. lmfit.parameter.Parameters
@@ -222,7 +222,7 @@ class Model:
             for dskey, dat in dataset.items():   #extract data for ("on", "off", "CO2") for each experiment
                      
                 t_grid = dat.index.values           #extract time from dataframe
-                sim_exp = self.simulate(None, t_grid, y0, p, c, yields, kwargs_solve_ivp)
+                sim_exp = self.simulate(None, t_grid, y0, p, c, kwargs_solve_ivp)
                 residuals_dict = {}     #dict which will contain residuals for one type of measurement ("on", "off", "CO2")
 
                 for var in dat:     #loop over measured variables (columns)
