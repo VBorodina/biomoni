@@ -166,7 +166,8 @@ class Bacillus_vf(Model):     #Dependent on base class
         return pressure
 
     def calc_weighting_factors(self, experiment):
-        """Calculates weighting factors from an single experiment: e.g. wf(i) = len("off") dataset / len(i) dataset for i = "CO2" or "on".
+        """Calculates weighting factors from an single experiment with respect to the magnitude of values
+         e.g. wf(i) = len("off") dataset / len(i) dataset for i = "CO2" or "on".
         
         :param experiment: Experiment object
         :type experiment: BioMoni.Experiment.Experiment
@@ -226,12 +227,20 @@ class Bacillus_vf(Model):     #Dependent on base class
         return c  
 
     def calc_Fout(self, experiment):
+        """Calculates outflow Fout due to sampling from provided SampleVolume in offline data.
+        It turns SampleVolume into Flowrate that is necessary to flow for a period of 10 min and result in the given amount of sample volume
+        :param experiment: Experiment object
+        :type experiment: BioMoni.Experiment.Experiment
+        :return: Flow: inter1pd object describing outflow
+        
+        """
             
-            if "SampleVolume [g]" in experiment.dataset["off"]:
+        if "SampleVolume [g]" in experiment.dataset["off"]:
                 
                 b = experiment.dataset["off"]["SampleVolume [g]"]
 
-                #turning Sample Volume into Flowrate L/h that is necessry to flow for a period of 10 min to result the amount of Sample VOlume
+                #turning Sample Volume into Flowrate L/h that is necessry to flow for a period of 10 min to result the amount of sample volume
+                #assumption: 1g = 1mL sample 
                 c= pd.DataFrame(b*0.012)
                 c = c.rename(columns={"SampleVolume [g]":"VolumeFlow [mL/h]"})
 
@@ -253,7 +262,10 @@ class Bacillus_vf(Model):     #Dependent on base class
 
     def create_y0(self, experiment):
         """Creates initial state vector.
-
+            * y0[0] : initial Bio dry mass (mX) [g]
+            * y0[1] : initial Substrate mass (mS) [g]  
+            * y0[2] : initial Product mass(mP), in this case Riboflavin [mg]
+            * y0[3] : initial Volume of fermentation broth [L]
         :param experiment: Experiment object
         :type experiment: BioMoni.Experiment.Experiment
         :return: y0: Initial state vector as list.
@@ -272,9 +284,8 @@ class Bacillus_vf(Model):     #Dependent on base class
         :param t: Current time [h]
         :type t: float
         :param y: State vector:
-
-            * y[1] : Substrate mass (mS) [g]  
             * y[0] : Bio dry mass (mX) [g]
+            * y[1] : Substrate mass (mS) [g]  
             * y[2] : Product mass(mP), in this case Riboflavin [mg]
             * y[3] : Volume of fermentation broth [L]
 
@@ -299,7 +310,7 @@ class Bacillus_vf(Model):     #Dependent on base class
         :param yields: Calculated yields coefficients
         :type yields: dict 
                 
-        :return:______________  Substance concentrations and kinetic rates at time t. 
+        :return: Fin, Fout, mu, rS, rP, rX, rP, V  kinetic rates at time t. 
         """
 
         # fit parameters
@@ -387,7 +398,7 @@ class Bacillus_vf(Model):     #Dependent on base class
         :param yields: Calculated yields coefficients
         :type yields: dict 
                 
-        :return: dy_dt: Time derivative of state vector.
+        :return: dy_dt: Time derivative of state vector. State vector describes biomass, susbtrate, product and volume
         """
         
         csf = c["csf"] # substrate concentration in feed [g/L]  
@@ -403,62 +414,7 @@ class Bacillus_vf(Model):     #Dependent on base class
         
         return dmX_dt, dmS_dt, dmP_dt, dV_dt
 
-    def calc_CO2(self, t, y, p, c):
-        """ This function calculates the CO2 pressure in the reactor in vol. % by processing the outcome of the kinetics function.
-        
-        :param t: Current time [h]
-        :type t: float
-        :param y: State vector:
-
-            * y[1] : Substrate mass (mS) [g]  
-            * y[0] : Bio dry mass (mX) [g]
-            * y[3] : Product mass(mP), in this case Riboflavin [mg]
-            * y[2] : Volume of fermentation broth [L
-
-        :type y: array like
-        :param p: Structure with parameter values to be estimated, cf. lmfit.parameter.Parameters
-        :type p: lmfit.parameter.Parameters object
-        :param c:  Dictionary with control values
-
-            * c["feed_on"]:             Time point when feed was switched on [h]
-            * c["feed_rate"]:           Feed rate [L/h]
-            * c["csf"]:                 Substrate concentration in feed [g/L]
-            * c["feed_%_to_mL]: 
-            * c["feed_rate_mL_to_g"]:
-            * c[cNH3"]:                 Base concentration, NH3 [g/L]
-            * c["gas_flow"]:            Aeration rate [L/h]
-            * c["T"]:                   Temperature in reactor [°C]
-            * c["wf_on"]:               Weighting factor for online data [dimensionless]
-            * c["wf_CO2"]:              Weighting factor for CO2 data [dimensionless]
-            * c["pressure"]:            Mean pressure in CO2 sensor [bar]
-
-        :type c: dict
-        :param yields: Calculated yields coefficients
-        :type yields: dict 
-                
-        :return: CO2_percent: CO2 pressure in vol. % 
     
-        """
-
-        #fix parameters 
-        dV_gas_dt = c["gas_flow"]
-        R = 0.08314 #bar*l/mol*K
-        T = c["T"] + 273.15     #Kelvin  
-        pressure = c["pressure"] #bar
-        M_CO2 = 44.01     #g/mol
-
-        cX, V, Fin, mu = self.kinetics(t, y, p, c)
-        
-        qCO2 = 1                                        # qCO2 sollte in kinetics() berechnet werden, 1 ist nur als lückenfüller da 
-
-        #ideal gas equation to calculate CO2
-        dmCO2_dt = qCO2 * cX * V
-        dnCO2_dt = dmCO2_dt/M_CO2
-        dvCO2_dt = (dnCO2_dt*R*T)/pressure
-        CO2_percent = 100 * dvCO2_dt / dV_gas_dt
-
-        return CO2_percent
-
     
     def observation(self, t_grid, y0, p, c, **kwargs_solve_ivp):
         """ The observation function calculates simulated values by processing the outcome of the functions model_rhs and calc_CO2.
@@ -725,15 +681,7 @@ class Bacillus_vf(Model):     #Dependent on base class
         df = pd.DataFrame(data=F_C_in,index=t_grid, columns=["feedrate pure glucose g/h"])
         
         # calculate cumulated amount of Glucose from Feed
-        F_C_in_cum = []
-
-        for t in t_grid:
-            func = c["feedrate_glc"]
-            cummulation = scipy.integrate.quad(func,0,t,limit=200)
-            
-            F_C_in_cum.append(cummulation)
-
-        df["Glc g_cum"] = [x[0] for x in F_C_in_cum]
+        df["Glc g_cum"] = scipy.integrate.cumtrapz(df["feedrate pure glucose g/h"],df["feedrate pure glucose g/h"].index, initial=0)
         
         
         
