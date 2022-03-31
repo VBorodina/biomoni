@@ -34,7 +34,14 @@ def visualizeBacillusFermentation(dict_for_graphs):
      fig.add_trace(go.Scatter(x=dfg[exp]["simulated"].index, y=dfg[exp]["simulated"]["cP"], mode="lines", name = "Riboflavin_simulated", line= dict(color= col_dict["RF"], width= 2, dash="dot"), legendgroup ="group1"), row=1, col=1)
      fig.update_yaxes(title_text="Riboflavin [mg/L]", row=1,col=1, secondary_y =False, titlefont=dict(size=15), color=col_dict["RF"],showline=True, linewidth=2, linecolor=col_dict["RF"],showgrid=True, gridwidth=1, gridcolor="rgb(240,240,240)",zeroline=False,range = [0,5500])
      fig.update_yaxes(title_text="CDW [g/L]", row=1,col=1, secondary_y =True, titlefont=dict(size=15), color=col_dict["CDW"],showline=True, linewidth=2, linecolor=col_dict["CDW"],showgrid=False, gridwidth=1, gridcolor="rgb(240,240,240)",zeroline=False,range = [0,30])
-
+     fig.add_vrect(x0=0,x1=dfg[exp]["simulated"].index[-1],
+                   row=1,col=1, 
+                   annotation_text="considered for simulation",
+                   annotation_position="top left",
+              annotation=dict(font_size=10, font_color="rgb(70,70,70)"),
+              fillcolor="rgb(192,192,192)", opacity=0.20, line_width=0)
+     
+     
         #fig top right: CO2 and Stirrer 
         
      if "CO2" in dfg[exp]:
@@ -54,6 +61,13 @@ def visualizeBacillusFermentation(dict_for_graphs):
      fig.update_yaxes(title_text="Glucose [g/L]", row=2,col=1, secondary_y =False, titlefont=dict(size=15), color=col_dict["Glc [g/L]"],showline=True, linewidth=2, linecolor=col_dict["Glc [g/L]"],showgrid=True, gridwidth=1, gridcolor="rgb(240,240,240)",zeroline=False,range = [0,70])
      fig.add_trace(go.Scatter(x=dfg[exp]["CR1"].index, y= dfg[exp]["CR1"]["RR"], mode="markers", name = "Carbon recovery", marker= dict(color= col_dict["mu"], size= 6, symbol="circle",line=dict(width=0.5, color='DarkSlateGrey') ),legendgroup ="group1"),row=2, col=1, secondary_y=True)
      fig.update_yaxes(title_text="Carbon recovery [%]", row=2,col=1, secondary_y =True, titlefont=dict(size=15), color=col_dict["mu"],showline=True, linewidth=2, linecolor=col_dict["mu"],showgrid=False, gridwidth=1, gridcolor='LightPink',zeroline=False,range = [0,120])
+     fig.add_vrect(x0=0,x1=dfg[exp]["simulated"].index[-1],
+                   row=2,col=1, 
+                   annotation_text="considered for simulation",
+                   annotation_position="top left",
+              annotation=dict(font_size=10, font_color="rgb(70,70,70)"),
+              fillcolor="rgb(192,192,192)", opacity=0.20, line_width=0)
+     
         
         #fig 2nd row, right: pO2 and pO2 consumption rate 
      fig.add_trace(go.Scatter(x=dfg[exp]["on"].index, y= dfg[exp]["on"][("pO2_2","Value")], mode="markers", name = "dissolved Oxygen (DO)", marker= dict(color= col_dict[("pO2_2","Value")], size= 3, symbol="0"), legendgroup ="group2"), row=2, col=2)
@@ -81,6 +95,13 @@ def visualizeBacillusFermentation(dict_for_graphs):
      fig.add_trace(go.Scatter(x=dfg[exp]["simulated"].index, y=dfg[exp]["simulated"]["Fout"],  mode="lines", name = "Fout (sampling)", line= dict(color= col_dict["V"], width= 1, dash="solid"),legendgroup ="group3"),row=3, col=2, secondary_y=True)
      fig.update_yaxes(title_text="Feed Pump Power[%]", row=3, col=2, secondary_y =False, titlefont=dict(size=15), color=col_dict["F_out"],showline=True, linewidth=2, linecolor=col_dict["F_out"],showgrid=True, gridwidth=1, gridcolor="rgb(240,240,240)",zeroline=False,range = [0,10])
      fig.update_yaxes(title_text="Volume [L], Fout [L/h]", row=3, col=2, secondary_y =True, titlefont=dict(size=15), color=col_dict["V"],showline=True, linewidth=2, linecolor=col_dict["V"],showgrid=False, gridwidth=1, gridcolor='LightPink',zeroline=False,range = [0,1.5])
+     fig.add_vrect(x0=0,x1=dfg[exp]["simulated"].index[-1],
+                   row=3, col=2, 
+                   annotation_text="considered for simulation",
+                   annotation_position="top left",
+              annotation=dict(font_size=10, font_color="rgb(70,70,70)"),
+              fillcolor="rgb(192,192,192)", opacity=0.20, line_width=0)
+     
         
         #fig 4th row,left: Base demand(cummulated), Base consumption rate, pH
      fig.add_trace(go.Scatter(x=dfg[exp]["on"].index, y=dfg[exp]["on"][("BASET_2","Value")], mode="markers", name = "cumulated NH3 demand", marker= dict(color= col_dict[("BASET_2","Value")], size= 3, symbol="0"), legendgroup ="group2"), row=4, col=1)

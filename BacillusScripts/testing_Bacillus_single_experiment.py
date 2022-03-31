@@ -20,13 +20,14 @@ b= Bacillus_vf()
 b.estimate(experiment_dict_for_estimation)
 b.report()
 print(b.p)
-print(b.stat_single,b.stat)
+print(b.stat_single,b.stat_all)
 
-
-t_grid = np.linspace(0,40,1001) 
-sim_dict_all = {experiment.exp_id: b.simulate(experiment = experiment, t_grid = t_grid) for experiment in experiment_dict_for_estimation.values()} 
-
-
+sim_dict_all= {}
+for exp in experiment_dict_for_estimation.values():
+    sim_end_h=exp.dataset["on"].index[-1]
+    t_grid = np.linspace(0,sim_end_h,1001)
+    sim_dict=  b.simulate(experiment = exp, t_grid = t_grid)
+    sim_dict_all[exp.exp_id] = sim_dict
 
 
 
