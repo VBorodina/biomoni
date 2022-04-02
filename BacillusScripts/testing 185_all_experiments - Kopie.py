@@ -1,7 +1,7 @@
 import sys
 sys.path.append("V:/biomoni/")                      #without this line windows could not acces the package 
 from biomoni import Experiment
-from BacillusScripts.BacillusVariableFeedrate_copy import Bacillus_vf
+from BacillusScripts.BacillusVariableFeedrate import Bacillus_vf
 from BacillusScripts.visualizationBacillus import visualizeBacillusFermentation
 import pandas as pd
 import numpy as np
