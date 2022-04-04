@@ -59,7 +59,10 @@ def visualizeBacillusFermentation(dict_for_graphs):
      #fig.add_trace(go.Scatter(x=dfg[exp]["off"].index, y= dfg[exp]["off"]["Glucose [g/L]_rate"], mode="lines", name = "Glc consumption rate", line= dict(color= col_dict["rGlc"], width= 1, dash="solid"),legendgroup ="group5"),row=3, col=1, secondary_y=True)
      fig.add_trace(go.Scatter(x=dfg[exp]["simulated"].index, y=dfg[exp]["simulated"]["cS"], mode="lines", name = "Glucose_simulated", line= dict(color= col_dict["Glc [g/L]"], width= 2, dash="dot"), legendgroup ="group1"), row=2, col=1)
      fig.update_yaxes(title_text="Glucose [g/L]", row=2,col=1, secondary_y =False, titlefont=dict(size=15), color=col_dict["Glc [g/L]"],showline=True, linewidth=2, linecolor=col_dict["Glc [g/L]"],showgrid=True, gridwidth=1, gridcolor="rgb(240,240,240)",zeroline=False,range = [0,70])
-     fig.add_trace(go.Scatter(x=dfg[exp]["CR1"].index, y= dfg[exp]["CR1"]["RR"], mode="markers", name = "Carbon recovery", marker= dict(color= col_dict["mu"], size= 6, symbol="circle",line=dict(width=0.5, color='DarkSlateGrey') ),legendgroup ="group1"),row=2, col=1, secondary_y=True)
+     if "CR1" in dfg[exp]:
+         fig.add_trace(go.Scatter(x=dfg[exp]["CR1"].index, y= dfg[exp]["CR1"]["RR"], mode="markers", name = "Carbon recovery", marker= dict(color= col_dict["mu"], size= 6, symbol="circle",line=dict(width=0.5, color='DarkSlateGrey') ),legendgroup ="group1"),row=2, col=1, secondary_y=True)
+     else:
+         fig.add_trace(go.Scatter(x=[], y= [], mode="markers", name = "Carbon recovery", marker= dict(color= col_dict["mu"], size= 6, symbol="circle",line=dict(width=0.5, color='DarkSlateGrey') ),legendgroup ="group1"),row=2, col=1, secondary_y=True)
      fig.update_yaxes(title_text="Carbon recovery [%]", row=2,col=1, secondary_y =True, titlefont=dict(size=15), color=col_dict["mu"],showline=True, linewidth=2, linecolor=col_dict["mu"],showgrid=False, gridwidth=1, gridcolor='LightPink',zeroline=False,range = [0,120])
      fig.add_vrect(x0=0,x1=dfg[exp]["simulated"].index[-1],
                    row=2,col=1, 
@@ -78,9 +81,9 @@ def visualizeBacillusFermentation(dict_for_graphs):
         
          #fig 3d row, left: Acetate & pH
         
-     fig.add_trace(go.Scatter(x=dfg[exp]["off"].index, y=dfg[exp]["off"]["Acetate [g/L]"], mode="markers", name = "Acetate", marker= dict(color= col_dict["Acetate"], size= 8, symbol="x",line=dict(width=1, color=rand)), legendgroup ="group1"), row=3, col=2) 
+     fig.add_trace(go.Scatter(x=dfg[exp]["off"].index, y=dfg[exp]["off"]["Acetate [g/L]"], mode="markers", name = "Acetate", marker= dict(color= col_dict["Acetate"], size= 8, symbol="x",line=dict(width=1, color=rand)), legendgroup ="group3"), row=3, col=2) 
      fig.update_yaxes(title_text="Acetate [g/L]", row=3,col=2, secondary_y =False, titlefont=dict(size=15), color=col_dict["Acetate"],showline=True, linewidth=2, linecolor=col_dict["Acetate"],showgrid=True, gridwidth=1, gridcolor="rgb(240,240,240)",zeroline=True,range = [0,15])
-     fig.add_trace(go.Scatter(x=dfg[exp]["on"].index, y= dfg[exp]["on"][("pH_2","Value")], mode="markers", name = "pH", marker= dict(color= col_dict["pH"], size= 3, symbol="0"),legendgroup ="group7"),row=3, col=2, secondary_y=True)
+     fig.add_trace(go.Scatter(x=dfg[exp]["on"].index, y= dfg[exp]["on"][("pH_2","Value")], mode="markers", name = "pH", marker= dict(color= col_dict["pH"], size= 3, symbol="0"),legendgroup ="group3"),row=3, col=2, secondary_y=True)
      #fig.add_trace(go.Scatter(x=dfg[exp]["off"].index, y= dfg[exp]["off"]["Glucose [g/L]"], mode="markers", name = "Glucose", marker= dict(color= col_dict["Glc [g/L]"], size= 8, symbol="x"), legendgroup ="group5"), row=3, col=1)
      #fig.add_trace(go.Scatter(x=dfg[exp]["off"].index, y= dfg[exp]["off"]["Glucose [g/L]_rate"], mode="lines", name = "Glc consumption rate", line= dict(color= col_dict["rGlc"], width= 1, dash="solid"),legendgroup ="group5"),row=3, col=1, secondary_y=True)
         #fig.add_trace(go.Scatter(x=[0], y= [0], mode="markers", name = "Glc Feed rate", marker= dict(color= col_dict["GlcFeed_rate"], size= 5, symbol="0"),legendgroup ="group5"),row=3, col=1, secondary_y=True)
