@@ -1,26 +1,45 @@
 import sys
 sys.path.append("V:/biomoni/")                      #without this line windows could not acces the package 
 from biomoni import Experiment
-from BacillusScripts.BacillusVariableFeedrate_copy import Bacillus_vf
+from BacillusScripts.BacillusVariableFeedrate import Bacillus_vf
 from BacillusScripts.visualizationBacillus import visualizeBacillusFermentation
 import pandas as pd
 import numpy as np
 from scipy.interpolate import interp1d
+from lmfit import Parameters
 from IPython.display import display
 
-path = r"V:/biomoni/BacillusData/Stamm185"
+path = r"V:/biomoni/BacillusData/Stamm186"
 
-experiment_dict_for_estimation = {exp : Experiment(path, exp,endpoint = "Sim_end") for exp in ["F5"]}  #all experiments in a dictionary   
-experiment_dict_for_graphs = {exp : Experiment(path, exp, endpoint = "F_end") for exp in ["F5"]} 
+
+experiment_dict_for_estimation = {exp : Experiment(path, exp,endpoint = "Sim_end") for exp in ["F7"]}  #all experiments in a dictionary   
+experiment_dict_for_graphs = {exp : Experiment(path, exp, endpoint = "F_end") for exp in ["F7"]} 
 
 
 
 #Exp = experiment_dict 
 b= Bacillus_vf()
-b.estimate(experiment_dict_for_estimation)
+b.estimate(experiment_dict_for_estimation)  
+  
+  
 b.report()
 print(b.p)
-print(b.stat_single,b.stat_all)
+
+for key in b.stat_single.keys():
+    df = pd.DataFrame(b.stat_single[key].values(), index = b.stat_single[key].keys())
+    df_t=df.transpose()
+    df_t["ID"]= key
+    df_t["type"] = "single"
+    print(df_t)
+    
+
+
+df_stat_all = pd.DataFrame(b.stat_all.values(), index = b.stat_all.keys())
+df_stat_all_t= df_stat_all.transpose()
+df_stat_all_t["ID"]= path
+print(df_stat_all_t)
+
+
 
 sim_dict_all= {}
 for exp in experiment_dict_for_estimation.values():

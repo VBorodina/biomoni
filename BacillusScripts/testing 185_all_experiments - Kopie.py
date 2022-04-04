@@ -20,7 +20,21 @@ b= Bacillus_vf()
 b.estimate(experiment_dict_for_estimation)
 b.report()
 print(b.p)
-print(b.stat_single,b.stat_all)
+
+for key in b.stat_single.keys():
+    df = pd.DataFrame(b.stat_single[key].values(), index = b.stat_single[key].keys())
+    df_t=df.transpose()
+    df_t["ID"]= key
+    df_t["type"] = "single"
+    print(df_t)
+    
+
+
+df_stat_all = pd.DataFrame(b.stat_all.values(), index = b.stat_all.keys())
+df_stat_all_t= df_stat_all.transpose()
+df_stat_all_t["ID"]= path
+print(df_stat_all_t)
+
 
 sim_dict_all= {}
 for exp in experiment_dict_for_estimation.values():
