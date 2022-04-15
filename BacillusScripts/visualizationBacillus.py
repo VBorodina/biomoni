@@ -62,7 +62,7 @@ def visualizeBacillusFermentation(dict_for_graphs):
      if "CR1" in dfg[exp]:
          fig.add_trace(go.Scatter(x=dfg[exp]["CR1"].index, y= dfg[exp]["CR1"]["RR"], mode="markers", name = "Carbon recovery", marker= dict(color= col_dict["mu"], size= 6, symbol="circle",line=dict(width=0.5, color='DarkSlateGrey') ),legendgroup ="group1"),row=2, col=1, secondary_y=True)
      else:
-         fig.add_trace(go.Scatter(x=[], y= [], mode="markers", name = "Carbon recovery", marker= dict(color= col_dict["mu"], size= 6, symbol="circle",line=dict(width=0.5, color='DarkSlateGrey') ),legendgroup ="group1"),row=2, col=1, secondary_y=True)
+         fig.add_trace(go.Scatter(x=[], y= [], mode="markers", name = "-", marker= dict(color= col_dict["mu"], size= 6, symbol="circle",line=dict(width=0.5, color='DarkSlateGrey') ),legendgroup ="group1"),row=2, col=1, secondary_y=True)
      fig.update_yaxes(title_text="Carbon recovery [%]", row=2,col=1, secondary_y =True, titlefont=dict(size=15), color=col_dict["mu"],showline=True, linewidth=2, linecolor=col_dict["mu"],showgrid=False, gridwidth=1, gridcolor='LightPink',zeroline=False,range = [0,120])
      fig.add_vrect(x0=0,x1=dfg[exp]["simulated"].index[-1],
                    row=2,col=1, 
