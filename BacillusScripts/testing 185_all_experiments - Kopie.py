@@ -10,7 +10,7 @@ from IPython.display import display
 
 path = r"V:/biomoni/BacillusData/Stamm185"
 
-experiment_dict_for_estimation = {exp : Experiment(path, exp,endpoint = "Sim_end") for exp in ["F1","F2","F3","F4","F5",]}  #all experiments in a dictionary   
+experiment_dict_for_estimation = {exp : Experiment(path, exp,endpoint = "Sim_end") for exp in ["F1","F2","F3","F4","F5"]}  #all experiments in a dictionary   
 experiment_dict_for_graphs = {exp : Experiment(path, exp, endpoint = "F_end") for exp in ["F1","F2","F3","F4","F5"]} 
 
 
