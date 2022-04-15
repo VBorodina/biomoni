@@ -84,16 +84,16 @@ class Bacillus_vf(Model):     #Dependent on base class
 
             p = Parameters()
               
-            p.add("Km", value=0.1, min=0.01, max=0.5,  vary=False)   #Saturation constant, concentration of glucose at µ = 0.5 µmax [g/L]
-            p.add("Yxs", value=0.207, min=0.01, max=0.5, vary=True)    #Yield biomass per glucose [g/g]
-            p.add("Ypx", value= 86.15, min= 10, max= 200, vary= True)   #Yield RF per biomass [mg/g]
+            p.add("Km", value=10, min=11, max=9,  vary=False)   #Saturation constant, concentration of glucose at µ = 0.5 µmax [g/L]
+            p.add("Yxs", value=0.1, min=0.0001, max=0.5, vary=True)    #Yield biomass per glucose [g/g]
+            p.add("Ypx", value= 100, min= 10, max= 250, vary= True)   #Yield RF per biomass [mg/g]
             #p.add("Yxsmain",value = 0.2, min= 0.00001, max=1, vary=True)
             
             #For single experiment fitting:
-            #p.add("viab_f", value= 0.467, min = 0.1, max=3, vary=True)
+            #p.add("viab_f", value= 0.09, min = 0.0001, max=3, vary=True)
             
             #Biomassgrowth
-            p.add("mu_max", value= 0.246, min= 0.01, max= 1, vary = True)               #EINHEIT?! g/h?
+            p.add("mu_max", value= 0.2, min= 0.01, max= 0.5, vary = True)               #EINHEIT?! g/h?
 
             self.p = p
             
@@ -476,7 +476,7 @@ class Bacillus_vf(Model):     #Dependent on base class
         dict_sim_exp = {("t"): t_grid, ("V"): V, ("cX", "CDW_calc"):cX, 
                         ("BASET_rate","BASE"): 1, ("cS", "Glucose [g/L]"): cS,
                         ("cP","RF [mg/L]"): cP, ("Fout","F_out"): Fout}                 #necessary to extend the dict if col names are different in offline/online datasets for different Fermentation runs, warning: give BASET_rate column also another alternative name even if BASET_rate has no other names. If you dont: you will get each letter as a seperate column and t will be overwritten!  
-                                                                                    # Base_rate is set to = 1 because not calculated in simulations
+                                                                                    # Base_rate is set to = 1 because not calculated here in simulations
         dict_sim_exp = {key: value for keys, value in dict_sim_exp.items() for key in keys}                             
         #simulated values
         sim_exp = pd.DataFrame(dict_sim_exp).set_index("t")           
