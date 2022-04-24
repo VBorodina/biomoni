@@ -188,7 +188,7 @@ class Bacillus_vf(Model):     #Dependent on base class
         
         """
 
-        c = {"feed_%_to_mL" : experiment.metadata.loc["feed_%_to_mL"],"feed_on" : experiment.metadata.loc["tsfeedOn"], "add_IPTG": experiment.metadata.loc["add_IPTG"], "feed_rate_mL_to_g" : experiment.metadata.loc["feed_rate_mL_to_g"], "csf" : experiment.metadata.loc["csf"]
+        c = {"feed_%_to_mL" : experiment.metadata.loc["feed_%_to_mL"],"feed_on" : experiment.metadata.loc["tsfeedOn"], "add_IPTG": experiment.metadata.loc["add_IPTG"], "csf" : experiment.metadata.loc["csf"]
         , "cNH3" : experiment.metadata.loc["cNH3"], "gas_flow_lpm" : experiment.metadata.loc["gas_flow"], "T" : experiment.metadata.loc["T"]}
         
         c["gas_flow"] = c["gas_flow_lpm"] * 60 #turn  Lpm to L/h
@@ -368,8 +368,7 @@ class Bacillus_vf(Model):     #Dependent on base class
             * c["feed_on"]:             Time point when feed was switched on [h]
             * c["feed_rate"]:           Feed rate [L/h]
             * c["csf"]:                 Substrate concentration in feed [g/L]
-            * c["feed_%_to_mL]: 
-            * c["feed_rate_mL_to_g"]:
+            * c["feed_%_to_mL]:         feed pump correlation factor (corrected)
             * c[cNH3"]:                 Base concentration, NH3 [g/L]
             * c["gas_flow"]:            Aeration rate [L/h]
             * c["T"]:                   Temperature in reactor [°C]
@@ -420,8 +419,7 @@ class Bacillus_vf(Model):     #Dependent on base class
             * c["feed_on"]:             Time point when feed was switched on [h]
             * c["feed_rate"]:           Feed rate [L/h]
             * c["csf"]:                 Substrate concentration in feed [g/L]
-            * c["feed_%_to_mL]: 
-            * c["feed_rate_mL_to_g"]:
+            * c["feed_%_to_mL]:         feed pump correlation factor (corrected)
             * c[cNH3"]:                 Base concentration, NH3 [g/L]
             * c["gas_flow"]:            Aeration rate [L/h]
             * c["T"]:                   Temperature in reactor [°C]
