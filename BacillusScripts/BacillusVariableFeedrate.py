@@ -85,7 +85,7 @@ class Bacillus_vf(Model):     #Dependent on base class
             p = Parameters()
               
             p.add("Km", value=10, min=11, max=9,  vary=False)   #Saturation constant, concentration of glucose at µ = 0.5 µmax [g/L]
-            p.add("Yxs", value=0.1, min=0.0001, max=0.5, vary=True)    #Yield biomass per glucose [g/g]
+            p.add("Yxs", value=0.1, min=0.01, max=0.5, vary=True)    #Yield biomass per glucose [g/g]
             p.add("Ypx", value= 100, min= 10, max= 250, vary= True)   #Yield RF per biomass [mg/g]
             #p.add("Yxsmain",value = 0.2, min= 0.00001, max=1, vary=True)
             
@@ -613,11 +613,22 @@ class Bacillus_vf(Model):     #Dependent on base class
                     if var in sim_exp.columns:
                         
                         x = ["Glucose [g/L]","RF [mg/L]","Acetat [g/L]","CDW_calc",("BASET_2","Value"),('pO2_2', 'Value'),"CO2"]
+                        rel_err = {"Glucose [g/L]": 0.04,"RF [mg/L]":0.05,"Acetat [g/L]":0.05,"CDW_calc":0.02}
+                        abs_err = {"Glucose [g/L]": 2,"RF [mg/L]": 50 ,"Acetat [g/L]": 2,"CDW_calc": 0.4}
                        
                         if var in x:
                     
                            #print("difference in " + str(var) + " is processed.")
+                           
+                           #weight factors based on magnitude and amount of measurments
                            res_var1 = (weighting_factors[dskey][var] * ((sim_exp[var] - dat[var]).values))
+                           
+                           #weight factors based on relative errors for later interpretation of confidence interval of estimated parameters given by lmfit result
+                           #res_var1 = ((sim_exp[var] - dat[var])).values / rel_err[var]
+                           
+                           #weight factors based on absolute errors for later interpretation of confidence interval of estimated parameters given by lmfit result
+                           #res_var1 = ((sim_exp[var] - dat[var])).values / abs_err[var]
+                           
                            res_single = np.append(res_single, res_var1)
                             
                         
